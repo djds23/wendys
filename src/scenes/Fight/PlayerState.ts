@@ -1,16 +1,17 @@
 import Phaser from 'phaser'
 import { MovementUpdate, HorizontalMovement } from './Movement'
+import TimeUpdate from './Time'
 
 export default class PlayerState {
-    idle: Phaser.GameObjects.Sprite
-    attack: Phaser.GameObjects.Sprite
-    currentSprite: Phaser.GameObjects.Sprite
+    idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    currentSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
 
-    canMove = true
+    isAttacking = false
 
     constructor(
-        idle: Phaser.GameObjects.Sprite,
-        attack: Phaser.GameObjects.Sprite
+        idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+        attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     ) {
         this.idle = idle
         this.attack = attack
@@ -18,8 +19,13 @@ export default class PlayerState {
 
         attack.setOrigin(0, 0)
         attack.setScale(3)
+        attack.setCollideWorldBounds(true)
+        attack.disableBody()
+    
         idle.setOrigin(0, 0)
         idle.setScale(3)
+        idle.setCollideWorldBounds(true)
+
 
         attack.setVisible(false)
         idle.play("idle")
@@ -28,8 +34,8 @@ export default class PlayerState {
     /*
         Try call this every update
     */
-    update(inputs: MovementUpdate | null) {
-        if (inputs != null) {
+    update(inputs: MovementUpdate | null, time: TimeUpdate) {
+        if (inputs != null && this.isAttacking == false) {
             let xAdjustment = this.currentSprite.x
             switch (inputs.horizontal) {
                 case HorizontalMovement.LEFT:
@@ -46,15 +52,14 @@ export default class PlayerState {
     }
 
     performAttack() {
-        this.canMove = false
-        this.attack.setX(this.currentSprite.x)
-        this.attack.setY(this.currentSprite.y)
+        if (this.isAttacking) return;
+        this.isAttacking = true
         this.currentSprite?.setVisible(false)
-        this.attack?.setVisible(true)
+        this.attack.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
         this.currentSprite = this.attack
         this.attack?.play('attack').on(Phaser.Animations.Events.ANIMATION_COMPLETE, (anim, frame, gameObject) => {
-            this.canMove = true
-            this.attack?.setVisible(false)
+            this.isAttacking = false
+            this.attack.disableBody(true, true)
             this.currentSprite = this.idle
             this.currentSprite?.setVisible(true)
         });

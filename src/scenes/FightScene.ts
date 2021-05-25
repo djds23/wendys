@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import PlayerState from './Fight/PlayerState'
 import { HorizontalMovement, MovementUpdate } from './Fight/Movement'
+import TimeUpdate from './Fight/Time'
 import Environment from '../Environment'
 
 interface Asset {
@@ -66,9 +67,11 @@ export default class FightScene extends Phaser.Scene {
             duration: 0.1
         });
 
+        let idle = this.physics.add.sprite(0, 400, BlueWitch.idle.key, 0)
+        let attack = this.physics.add.sprite(0, 400, BlueWitch.attack.key, 0)
         this.current.p1 = new PlayerState(
-            this.add.sprite(0, 400, BlueWitch.idle.key, 0),
-            this.add.sprite(0, 400, BlueWitch.attack.key, 0)
+            idle,
+            attack
         )
         if (this.input.gamepad.total === 0) {
             this.input.gamepad.once('connected', pad => {
@@ -86,12 +89,13 @@ export default class FightScene extends Phaser.Scene {
         }
     }
 
-    update() {
+    update(time, delta) {
+        let timeUpdate = new TimeUpdate(time, delta)
         if (this.current.pad?.leftStick != null) {
             let direction = leftStickToMovement(this.current.pad?.leftStick)
-            this.current.p1?.update(new MovementUpdate(direction))
+            this.current.p1?.update(new MovementUpdate(direction, HorizontalMovement.RIGHT), timeUpdate)
         } else {
-            this.current.p1?.update(null)
+            this.current.p1?.update(null, timeUpdate)
         }
     }
 }

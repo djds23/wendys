@@ -1,10 +1,19 @@
-import Phaser from 'phaser'
-
 class MovementUpdate {
+    // direction you are moving
     horizontal: HorizontalMovement
-
-    constructor(horizontal: HorizontalMovement) {
+    
+    // direction you are facing
+    facing: HorizontalMovement
+    constructor(
+        horizontal: HorizontalMovement,
+        facing: HorizontalMovement
+        ) {
         this.horizontal = horizontal
+        this.facing = facing
+    }
+
+    isFacingOpponent(): boolean {
+        return this.horizontal == this.facing
     }
 }
 
