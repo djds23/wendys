@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 
-import HelloWorldScene from './scenes/HelloWorldScene'
+import FightScene from './scenes/FightScene'
 
 const config: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
@@ -14,7 +14,7 @@ const config: Phaser.Types.Core.GameConfig = {
 	},
 	input: { gamepad: true, keyboard: true },
 	backgroundColor: "#ff0000",
-	scene: [HelloWorldScene]
+	scene: [FightScene]
 }
 
 export default new Phaser.Game(config)
