@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import PlayerState from './Fight/PlayerState'
-import { HorizontalMovement, MovementUpdate } from './Fight/Movement'
+import { HorizontalMovement, VerticalMovement, MovementUpdate } from './Fight/Movement'
 import TimeUpdate from './Fight/Time'
 import Environment from '../Environment'
 
@@ -31,6 +31,14 @@ class BlueWitch {
     }
 }
 
+class Stage {
+    static ground: Asset = {
+        key: "asset/images/ground.png",
+        path: "asset/images/ground.png",
+        frameConfig: undefined
+    }
+}
+
 class Current {
     p1: PlayerState | null = null
     pad: Phaser.Input.Gamepad.Gamepad | null = null
@@ -45,11 +53,13 @@ export default class FightScene extends Phaser.Scene {
     preload() {
         this.load.setBaseURL(Environment.baseURL)
 
+        this.load.image(Stage.ground.key, Stage.ground.path)
         this.load.spritesheet(BlueWitch.attack.key, BlueWitch.attack.path, BlueWitch.attack.frameConfig)
         this.load.spritesheet(BlueWitch.idle.key, BlueWitch.idle.path, BlueWitch.idle.frameConfig)
     }
 
     create() {
+        let ground = this.physics.add.staticImage(0, 0, Stage.ground.key);
         // Animation set
         this.anims.create({
             key: "idle",
@@ -92,17 +102,25 @@ export default class FightScene extends Phaser.Scene {
     update(time, delta) {
         let timeUpdate = new TimeUpdate(time, delta)
         if (this.current.pad?.leftStick != null) {
-            let direction = leftStickToMovement(this.current.pad?.leftStick)
-            this.current.p1?.update(new MovementUpdate(direction, HorizontalMovement.RIGHT), timeUpdate)
+            let direction = leftStickToHorizontalMovement(this.current.pad?.leftStick)
+            let jump = leftStickToVerticalMovement(this.current.pad?.leftStick)
+            let playerFacingDirection = HorizontalMovement.RIGHT
+            this.current.p1?.update(new MovementUpdate(direction, jump, playerFacingDirection), timeUpdate)
         } else {
             this.current.p1?.update(null, timeUpdate)
         }
     }
 }
 
-function leftStickToMovement(vector: Phaser.Math.Vector2): HorizontalMovement {
+function leftStickToHorizontalMovement(vector: Phaser.Math.Vector2): HorizontalMovement {
     let ceiledX = Phaser.Math.Fuzzy.Ceil(vector.x)
     if (ceiledX < 0) return HorizontalMovement.LEFT;
     if (ceiledX > 0) return HorizontalMovement.RIGHT;
     return HorizontalMovement.STATIONARY; // If 0, then stationary
+}
+
+function leftStickToVerticalMovement(vector: Phaser.Math.Vector2): VerticalMovement {
+    let ceiledY = Phaser.Math.Fuzzy.Ceil(vector.y)
+    if (ceiledY == -1) return VerticalMovement.JUMP;
+    return VerticalMovement.STATIONARY;
 }
