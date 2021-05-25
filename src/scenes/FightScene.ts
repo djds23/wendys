@@ -33,8 +33,8 @@ class BlueWitch {
 
 class Stage {
     static ground: Asset = {
-        key: "asset/images/ground.png",
-        path: "asset/images/ground.png",
+        key: "assets/images/ground.png",
+        path: "assets/images/ground.png",
         frameConfig: undefined
     }
 }
@@ -59,7 +59,7 @@ export default class FightScene extends Phaser.Scene {
     }
 
     create() {
-        let ground = this.physics.add.staticImage(0, 0, Stage.ground.key);
+        let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
         // Animation set
         this.anims.create({
             key: "idle",
@@ -77,8 +77,8 @@ export default class FightScene extends Phaser.Scene {
             duration: 0.1
         });
 
-        let idle = this.physics.add.sprite(0, 400, BlueWitch.idle.key, 0)
-        let attack = this.physics.add.sprite(0, 400, BlueWitch.attack.key, 0)
+        let idle = this.physics.add.sprite(0, 200, BlueWitch.idle.key, 0)
+        let attack = this.physics.add.sprite(0, 200, BlueWitch.attack.key, 0)
         this.current.p1 = new PlayerState(
             idle,
             attack
@@ -97,6 +97,7 @@ export default class FightScene extends Phaser.Scene {
         else {
             this.current.pad = this.input.gamepad.pad1;
         }
+        this.current.p1.configure(this, ground)
     }
 
     update(time, delta) {

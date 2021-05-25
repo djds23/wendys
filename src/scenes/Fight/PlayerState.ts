@@ -30,8 +30,9 @@ export default class PlayerState {
     }
 
     // Call in create to finish configuring object
-    configure(scene: Phaser.Scene) {
-
+    configure(scene: Phaser.Scene, ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+        scene.physics.add.collider(this.attack, ground);
+        scene.physics.add.collider(this.idle, ground);
     }
     /*
         Try call this every update
