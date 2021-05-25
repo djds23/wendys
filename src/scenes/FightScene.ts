@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import PlayerState from './Fight/PlayerState'
 import { HorizontalMovement, MovementUpdate } from './Fight/Movement'
+import Environment from '../Environment'
 
 interface Asset {
     key: string
@@ -41,7 +42,7 @@ export default class FightScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setBaseURL('https://objective-boyd-c6f13f.netlify.app/')
+        this.load.setBaseURL(Environment.baseURL)
 
         this.load.spritesheet(BlueWitch.attack.key, BlueWitch.attack.path, BlueWitch.attack.frameConfig)
         this.load.spritesheet(BlueWitch.idle.key, BlueWitch.idle.path, BlueWitch.idle.frameConfig)
