@@ -12,6 +12,8 @@ const config: Phaser.Types.Core.GameConfig = {
 			gravity: { y: 200 }
 		}
 	},
+	input: { gamepad: true, keyboard: true },
+	backgroundColor: "#ff0000",
 	scene: [HelloWorldScene]
 }
 
