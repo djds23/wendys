@@ -41,7 +41,7 @@ export default class FightScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setBaseURL('http://localhost:8000')
+        this.load.setBaseURL('https://objective-boyd-c6f13f.netlify.app/')
 
         this.load.spritesheet(BlueWitch.attack.key, BlueWitch.attack.path, BlueWitch.attack.frameConfig)
         this.load.spritesheet(BlueWitch.idle.key, BlueWitch.idle.path, BlueWitch.idle.frameConfig)
