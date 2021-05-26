@@ -31,24 +31,27 @@ export default class PlayerState {
 
     // Call in create to finish configuring object
     configure(scene: Phaser.Scene, ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
-        scene.physics.add.collider(this.attack, ground);
-        scene.physics.add.collider(this.idle, ground);
+        scene.physics.add.collider(this.attack, ground)
+        scene.physics.add.collider(this.idle, ground)
     }
     /*
         Try call this every update
     */
-    update(inputs: MovementUpdate | null, time: TimeUpdate) {
+    update(inputs: MovementUpdate | null) {
         if (inputs != null && this.isAttacking() == false) {
             let xAdjustment = this.currentSprite.x
-            this.isJumping = this.currentSprite.body.touching.down == false
-            if (inputs.veritcal == VerticalMovement.JUMP) {
+            if (this.isJumping) {
+                if (this.currentSprite.body.touching.down) {
+                    this.isJumping = false
+                    this.currentSprite.setVelocity(0, 0)
+                }
+            } else if (inputs.veritcal == VerticalMovement.JUMP) {
+                console.log(inputs)
                 this.isJumping = true
                 this.currentSprite.setVelocity(
                     this.horizontalMovementToJumpVelocity(inputs.horizontal),
-                    -300
-                ).on(Phaser.Physics.Arcade.Events.WORLD_BOUNDS, (gameObject1, gameObject2, body1, body2) => {
-                    this.isJumping = false
-                })
+                    -1000
+                )
             } else if (this.isJumping == false) {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
@@ -68,13 +71,14 @@ export default class PlayerState {
     horizontalMovementToJumpVelocity(movement: HorizontalMovement): number {
         switch (movement) {
             case HorizontalMovement.LEFT:
-                return -3
+                return -300
             case HorizontalMovement.RIGHT:
-                return 3
+                return 300
             case HorizontalMovement.STATIONARY:
                 return 0
         }
     }
+
     performAttack() {
         if (this.isAttacking()) return;
         this.currentSprite?.setVisible(false)

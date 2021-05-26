@@ -46,6 +46,10 @@ class Current {
 
 export default class FightScene extends Phaser.Scene {
     current: Current = new Current();
+    inputTextLines = new Array<Phaser.GameObjects.Text>()
+    recentMovementInputs = new Array<MovementUpdate>()
+
+    gamepadEventHandler: GamePadStickHandler | null = null
     constructor() {
         super('FightScene')
     }
@@ -59,6 +63,7 @@ export default class FightScene extends Phaser.Scene {
     }
 
     create() {
+        this.addInputText()
         let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
         // Animation set
         this.anims.create({
@@ -77,8 +82,8 @@ export default class FightScene extends Phaser.Scene {
             duration: 0.1
         });
 
-        let idle = this.physics.add.sprite(0, 200, BlueWitch.idle.key, 0)
-        let attack = this.physics.add.sprite(0, 200, BlueWitch.attack.key, 0)
+        let idle = this.physics.add.sprite(0, 0, BlueWitch.idle.key, 0)
+        let attack = this.physics.add.sprite(0, 0, BlueWitch.attack.key, 0)
         this.current.p1 = new PlayerState(
             idle,
             attack
@@ -87,6 +92,15 @@ export default class FightScene extends Phaser.Scene {
             this.input.gamepad.once('connected', pad => {
 
                 this.current.pad = pad;
+                this.gamepadEventHandler = new GamePadStickHandler(pad)
+                this.gamepadEventHandler.register((pad, time) => {
+                    let direction = leftStickToHorizontalMovement(pad.leftStick)
+                    let jump = leftStickToVerticalMovement(pad.leftStick)
+                    let playerFacingDirection = HorizontalMovement.RIGHT
+                    let movementUpdate = new MovementUpdate(direction, jump, playerFacingDirection)
+                    this.current.p1?.update(movementUpdate)
+                    this.recentMovementInputs.unshift(movementUpdate)
+                })
                 pad.on(Phaser.Input.Gamepad.Events.BUTTON_DOWN, (index, value, button) => {
                     if (index === 0) {
                         this.current.p1?.performAttack()
@@ -101,15 +115,25 @@ export default class FightScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        let timeUpdate = new TimeUpdate(time, delta)
-        if (this.current.pad?.leftStick != null) {
-            let direction = leftStickToHorizontalMovement(this.current.pad?.leftStick)
-            let jump = leftStickToVerticalMovement(this.current.pad?.leftStick)
-            let playerFacingDirection = HorizontalMovement.RIGHT
-            this.current.p1?.update(new MovementUpdate(direction, jump, playerFacingDirection), timeUpdate)
-        } else {
-            this.current.p1?.update(null, timeUpdate)
+        this.gamepadEventHandler?.update(time, delta)
+        this.updateInputText()
+    }
+    addInputText() {
+        for (let y=20; y <= 100; y+=20) {
+            this.inputTextLines.push(
+                this.add.text(20, y, "")
+            )
         }
+
+    }
+
+    updateInputText() {
+        this.recentMovementInputs = this.recentMovementInputs.slice(0, 4)
+        this.inputTextLines.forEach((object, index) => {
+            let movement = this.recentMovementInputs[index]
+            object.text = JSON.stringify(movement) 
+        })
+
     }
 }
 
@@ -124,4 +148,42 @@ function leftStickToVerticalMovement(vector: Phaser.Math.Vector2): VerticalMovem
     let ceiledY = Phaser.Math.Fuzzy.Ceil(vector.y)
     if (ceiledY == -1) return VerticalMovement.JUMP;
     return VerticalMovement.STATIONARY;
+}
+
+class GamePadStickHandler {
+    gamepad: Phaser.Input.Gamepad.Gamepad
+    callbacks: Array<(pad: Phaser.Input.Gamepad.Gamepad, time: number) => void> = []
+    recentUpdates: Array<{x: number, y: number}> = []
+    constructor(gamepad: Phaser.Input.Gamepad.Gamepad) {
+        this.gamepad = gamepad
+    }
+
+    register(callback: (pad: Phaser.Input.Gamepad.Gamepad, time: number) => void) {
+        this.callbacks.push(callback)
+    }
+
+    update(time, delta) {
+        let ceiledX = Phaser.Math.Fuzzy.Ceil(this.gamepad.leftStick.x)
+        let ceiledY = Phaser.Math.Fuzzy.Ceil(this.gamepad.leftStick.y)
+        this.recentUpdates.push({
+            x: ceiledX,
+            y: ceiledY
+        })
+        this.recentUpdates = this.recentUpdates.slice(0, 1)
+        this.callListenersIfNeeded(time)
+    }
+
+    callListenersIfNeeded(time) {
+        let latest = this.recentUpdates[0]
+        if (latest != null) {
+            let checkIfElementsAreEqualToLatest = this.recentUpdates.every((element) => element === latest)
+            if (checkIfElementsAreEqualToLatest = false) {
+                this.callbacks.forEach(callback => callback(this.gamepad, time))
+            } else if (this.recentUpdates.length == 1) {
+                this.callbacks.forEach(callback => callback(this.gamepad, time))
+            }
+        } else {
+            this.callbacks.forEach(callback => callback(this.gamepad, time))
+        }
+    }
 }
