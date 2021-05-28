@@ -3,6 +3,7 @@ import PlayerState from './Fight/PlayerState'
 import { HorizontalMovement, VerticalMovement, MovementUpdate } from './Fight/Movement'
 import TimeUpdate from './Fight/Time'
 import Environment from '../Environment'
+import * as R from 'ramda' 
 
 interface Asset {
     key: string
@@ -49,7 +50,7 @@ export default class FightScene extends Phaser.Scene {
     inputTextLines = new Array<Phaser.GameObjects.Text>()
     recentMovementInputs = new Array<MovementUpdate>()
 
-    gamepadEventHandler: GamePadStickHandler | null = null
+    gamepadEventHandler: InputHandler | null = null
     constructor() {
         super('FightScene')
     }
@@ -92,7 +93,7 @@ export default class FightScene extends Phaser.Scene {
             this.input.gamepad.once('connected', pad => {
 
                 this.current.pad = pad;
-                this.gamepadEventHandler = new GamePadStickHandler(pad)
+                this.gamepadEventHandler = new InputHandler(pad)
                 this.gamepadEventHandler.register((pad, time) => {
                     let direction = leftStickToHorizontalMovement(pad.leftStick)
                     let jump = leftStickToVerticalMovement(pad.leftStick)
@@ -133,7 +134,6 @@ export default class FightScene extends Phaser.Scene {
             let movement = this.recentMovementInputs[index]
             object.text = JSON.stringify(movement) 
         })
-
     }
 }
 
@@ -150,10 +150,10 @@ function leftStickToVerticalMovement(vector: Phaser.Math.Vector2): VerticalMovem
     return VerticalMovement.STATIONARY;
 }
 
-class GamePadStickHandler {
+class InputHandler {
     gamepad: Phaser.Input.Gamepad.Gamepad
     callbacks: Array<(pad: Phaser.Input.Gamepad.Gamepad, time: number) => void> = []
-    recentUpdates: Array<{x: number, y: number}> = []
+    recentUpdate: {x: number, y: number} | null = null 
     constructor(gamepad: Phaser.Input.Gamepad.Gamepad) {
         this.gamepad = gamepad
     }
@@ -163,27 +163,15 @@ class GamePadStickHandler {
     }
 
     update(time, delta) {
-        let ceiledX = Phaser.Math.Fuzzy.Ceil(this.gamepad.leftStick.x)
-        let ceiledY = Phaser.Math.Fuzzy.Ceil(this.gamepad.leftStick.y)
-        this.recentUpdates.push({
-            x: ceiledX,
-            y: ceiledY
-        })
-        this.recentUpdates = this.recentUpdates.slice(0, 1)
-        this.callListenersIfNeeded(time)
-    }
-
-    callListenersIfNeeded(time) {
-        let latest = this.recentUpdates[0]
-        if (latest != null) {
-            let checkIfElementsAreEqualToLatest = this.recentUpdates.every((element) => element === latest)
-            if (checkIfElementsAreEqualToLatest = false) {
-                this.callbacks.forEach(callback => callback(this.gamepad, time))
-            } else if (this.recentUpdates.length == 1) {
-                this.callbacks.forEach(callback => callback(this.gamepad, time))
-            }
-        } else {
-            this.callbacks.forEach(callback => callback(this.gamepad, time))
+        let stickPosition = {
+            x: Phaser.Math.Fuzzy.Ceil(this.gamepad.leftStick.x),
+            y: Phaser.Math.Fuzzy.Ceil(this.gamepad.leftStick.y)
         }
+        if (R.equals(this.recentUpdate, stickPosition) == false) {
+            this.recentUpdate = stickPosition
+        }
+        this.callbacks.forEach((callback) => {
+            callback(this.gamepad, time)
+        })
     }
 }
