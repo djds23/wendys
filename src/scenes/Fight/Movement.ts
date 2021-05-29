@@ -2,6 +2,7 @@ class MovementUpdate {
     // direction you are moving
     horizontal: HorizontalMovement
     veritcal: VerticalMovement
+    style: MovementStyle
 
 
     // direction you are facing
@@ -9,11 +10,13 @@ class MovementUpdate {
     constructor(
         horizontal: HorizontalMovement,
         veritcal: VerticalMovement,
-        facing: HorizontalMovement
+        facing: HorizontalMovement,
+        style: MovementStyle
         ) {
         this.horizontal = horizontal
         this.veritcal = veritcal
         this.facing = facing
+        this.style = style
     }
 
     isFacingOpponent(): boolean {
@@ -29,8 +32,14 @@ enum VerticalMovement {
     JUMP, STATIONARY
 }
 
+enum MovementStyle {
+    RUN, DASH, STATIONARY
+
+}
+
 export {
     HorizontalMovement,
     VerticalMovement,
+    MovementStyle,
     MovementUpdate
 }
