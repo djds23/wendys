@@ -25,11 +25,11 @@ class MovementUpdate {
 }
 
 enum HorizontalMovement {
-    LEFT, RIGHT, STATIONARY
+    LEFT="LEFT", RIGHT="RIGHT", STATIONARY="STATIONARY-H"
 }
 
 enum VerticalMovement {
-    JUMP, STATIONARY
+    JUMP="JUMP", STATIONARY="STATIONARY-V"
 }
 
 enum MovementStyle {

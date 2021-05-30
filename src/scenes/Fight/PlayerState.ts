@@ -1,6 +1,6 @@
 import { Vertices } from 'matter'
 import Phaser, { Physics } from 'phaser'
-import { MovementUpdate, HorizontalMovement, VerticalMovement } from './Movement'
+import { MovementUpdate, HorizontalMovement, VerticalMovement } from '../Movement/Movement'
 import TimeUpdate from './Time'
 
 export default class PlayerState {
@@ -46,7 +46,7 @@ export default class PlayerState {
                     this.currentSprite.setVelocity(0, 0)
                 }
             } else if (inputs.veritcal == VerticalMovement.JUMP) {
-                console.log(inputs)
+                // console.log(inputs)
                 this.isJumping = true
                 this.currentSprite.setVelocity(
                     this.horizontalMovementToJumpVelocity(inputs.horizontal),

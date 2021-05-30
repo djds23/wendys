@@ -1,0 +1,5 @@
+const EXPECTED_FPS_RUNTIME = 60
+
+export {
+    EXPECTED_FPS_RUNTIME
+}
