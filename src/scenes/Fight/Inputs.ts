@@ -175,23 +175,19 @@ class KeyboardInputHandler implements InputHandler {
         } else {
             let vertical = Movement.VerticalMovement.STATIONARY
             let horizontal = Movement.HorizontalMovement.STATIONARY
-            for (let i = 0; downKeys.length - 1 == i; i++) {
-                let key = downKeys[i]
-                let direction = this.keyMap.key(key.keyCode)
-                switch (direction) {
-                case Movement.VerticalMovement.JUMP:
-                    vertical = Movement.VerticalMovement.JUMP
-                    break;
-                case Movement.HorizontalMovement.LEFT:
-                case Movement.HorizontalMovement.RIGHT:
+            downKeys.forEach((key) => {
+                let direction = this.keyMap.key(key.keyCode) 
+                if (direction === Movement.VerticalMovement.JUMP) {
+                    vertical = direction
+                } else if (direction === Movement.HorizontalMovement.LEFT ||
+                        direction === Movement.HorizontalMovement.RIGHT) {
                     if (horizontal === Movement.HorizontalMovement.STATIONARY) {
                         horizontal = direction
                     } else {
                         horizontal =  Movement.HorizontalMovement.STATIONARY
                     }
-                    break;
                 }
-            }
+            })
             return new Movement.MovementUpdate(
                 horizontal, 
                 vertical, 
