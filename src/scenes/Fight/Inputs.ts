@@ -27,7 +27,7 @@ class InputUpdate {
 }
 
 enum Action {
-    DASH="DASH", ATTACK="ATTACK", SPECIAL="SPECIAL", NONE="NO-INPUT"
+    DASH="DASH", ATTACK="ATTACK", SPECIAL="SPECIAL", NONE="NO-INPUT", START="START"
 }
 
 class GamepadInputHandler implements InputHandler {
@@ -139,14 +139,23 @@ class KeyToInputs {
                 this.horizontalMovement = null
                 this.action = Action.ATTACK
                 break;
-            default:
+            case Phaser.Input.Keyboard.KeyCodes.ESC:
                 this.verticalMovement = null
                 this.horizontalMovement = null
-                this.action = null
+                this.action = Action.START
+                break;
+            default:
+                throw new UnhandledKeyError("Key for code is unhandled: " + key.keyCode)
         }
     }
 }
 
+class UnhandledKeyError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "UnhandledKeyError";
+    }
+}
 class KeyboardInputHandler implements InputHandler {
 
     keyboard: Phaser.Input.Keyboard.KeyboardPlugin
@@ -168,6 +177,7 @@ class KeyboardInputHandler implements InputHandler {
             Phaser.Input.Keyboard.KeyCodes.S,
             Phaser.Input.Keyboard.KeyCodes.D,
             Phaser.Input.Keyboard.KeyCodes.J,
+            Phaser.Input.Keyboard.KeyCodes.ESC,
         ].map((keycode) => {
             return new KeyToInputs(this.keyboard.addKey(keycode, true))
         })

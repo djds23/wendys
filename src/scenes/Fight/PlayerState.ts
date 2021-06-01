@@ -8,11 +8,14 @@ export default class PlayerState {
     idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     currentSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    scene: Phaser.Scene
     isJumping = false
     constructor(
         idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
-        attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+        attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+        scene: Phaser.Scene
     ) {
+        this.scene = scene
         this.idle = idle
         this.attack = attack
         this.currentSprite = idle
@@ -31,15 +34,15 @@ export default class PlayerState {
     }
 
     // Call in create to finish configuring object
-    configure(scene: Phaser.Scene, ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+    configure(ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
         this.attack.body.setAllowRotation(false)
-        scene.physics.add.collider(this.attack, ground, (_obj1, _obj2) => { 
+        this.scene.physics.add.collider(this.attack, ground, (_obj1, _obj2) => { 
             this.isJumping = false
             this.attack.setVelocity(0, 0)
         })
         
         this.idle.body.setAllowRotation(false)
-        scene.physics.add.collider(this.idle, ground, (_obj1, _obj2) => { 
+        this.scene.physics.add.collider(this.idle, ground, (_obj1, _obj2) => { 
             this.isJumping = false
             this.idle.setVelocity(0, 0)
         })
@@ -72,6 +75,8 @@ export default class PlayerState {
 
             if (inputs.action === Input.Action.ATTACK) {
                 this.performAttack()
+            } else if (inputs.action === Input.Action.START) {
+                this.requestPause()
             }
         }
     }
@@ -98,6 +103,15 @@ export default class PlayerState {
             this.currentSprite = this.idle
             this.currentSprite?.setVisible(true)
         });
+    }
+
+    requestPause() {
+        let plugin = new Phaser.Scenes.ScenePlugin(this.scene)
+        if (plugin.isPaused()) {
+            plugin.start()
+        } else {
+            plugin.pause()
+        }
     }
 
     isAttacking(): boolean {

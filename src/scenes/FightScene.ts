@@ -3,6 +3,7 @@ import PlayerState from './Fight/PlayerState'
 import * as Movement from './Movement/Movement'
 import TimeUpdate from './Fight/Time'
 import * as Input from './Fight/Inputs'
+import * as current from './Current'
 import Environment from '../Environment'
 
 
@@ -41,20 +42,13 @@ class Stage {
     }
 }
 
-class Current {
-    p1: PlayerState | null = null
-    input: Input.InputHandler | null = null
-    dummy: Input.DummyInputHandler | null = null
-    gamepadEventHandler: Input.GamepadInputHandler | null = null
-    keyboard: Input.KeyboardInputHandler | null = null
-}
 
 export default class FightScene extends Phaser.Scene {
-    current: Current = new Current();
+    static key: string = 'FightScene'
     inputTextLines = new Array<Phaser.GameObjects.Text>()
     recentMovementInputs = new Array<Input.InputUpdate>()
     constructor() {
-        super('FightScene')
+        super(FightScene.key)
     }
 
     preload() {
@@ -87,42 +81,37 @@ export default class FightScene extends Phaser.Scene {
 
         let idle = this.physics.add.sprite(0, 0, BlueWitch.idle.key, 0)
         let attack = this.physics.add.sprite(0, 0, BlueWitch.attack.key, 0)
-        this.current.p1 = new PlayerState(
+        current.state.p1 = new PlayerState(
             idle,
-            attack
+            attack,
+            this
         )
+
         if (this.input.gamepad.total === 0) {
             this.input.gamepad.once('connected', pad => {
-                this.current.gamepadEventHandler = new Input.GamepadInputHandler(pad)
-                this.current.gamepadEventHandler.register((inputUpdate, time) => {
-                    this.current.p1?.update(inputUpdate)
+                current.state.gamepadEventHandler = new Input.GamepadInputHandler(pad)
+                current.state.gamepadEventHandler.register((inputUpdate, time) => {
+                    current.state.p1?.update(inputUpdate)
                     this.recentMovementInputs.unshift(inputUpdate)
                 })
             });
         } else {
             // this.current.pad = this.input.gamepad.pad1;
         }
-        this.current.keyboard = new Input.KeyboardInputHandler(
+        current.state.keyboard = new Input.KeyboardInputHandler(
             this.input.keyboard
         )
-        this.current.keyboard.register((inputUpdate, time) => {
-            this.current.p1?.update(inputUpdate)
+        current.state.keyboard.register((inputUpdate, time) => {
+            current.state.p1?.update(inputUpdate)
             this.recentMovementInputs.unshift(inputUpdate)
         })
-        this.current.keyboard.configure()
-
-        this.current.dummy = new Input.DummyInputHandler()
-        this.current.dummy.configure()
-        this.current.dummy.register((inputUpdate, time) => {
-            this.current.p1?.update(inputUpdate)
-            this.recentMovementInputs.unshift(inputUpdate)
-        })
-        this.current.p1.configure(this, ground)
+        current.state.keyboard.configure()
+        current.state.p1.configure(ground)
     }
 
     update(time, delta) {
-        this.current.gamepadEventHandler?.update(time, delta)
-        this.current.keyboard?.update(time, delta)
+        current.state.gamepadEventHandler?.update(time, delta)
+        current.state.keyboard?.update(time, delta)
         // this.current.dummy?.update(time, delta)
         this.updateInputText()
     }
