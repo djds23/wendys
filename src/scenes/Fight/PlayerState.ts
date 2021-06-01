@@ -1,7 +1,8 @@
 import { Vertices } from 'matter'
 import Phaser, { Physics } from 'phaser'
-import { MovementUpdate, HorizontalMovement, VerticalMovement } from '../Movement/Movement'
+import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
 import TimeUpdate from './Time'
+import * as Input from './Inputs'
 
 export default class PlayerState {
     idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -33,31 +34,29 @@ export default class PlayerState {
     configure(scene: Phaser.Scene, ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
         this.attack.body.setAllowRotation(false)
         scene.physics.add.collider(this.attack, ground, (_obj1, _obj2) => { 
+            this.isJumping = false
             this.attack.setVelocity(0, 0)
         })
         
         this.idle.body.setAllowRotation(false)
         scene.physics.add.collider(this.idle, ground, (_obj1, _obj2) => { 
+            this.isJumping = false
             this.idle.setVelocity(0, 0)
         })
     }
     /*
         Try call this every update
     */
-    update(inputs: MovementUpdate | null) {
+    update(inputs: Input.InputUpdate | null) {
         if (inputs != null && this.isAttacking() == false) {
             let xAdjustment = this.currentSprite.x
-            if (this.isJumping) {
-                if (this.currentSprite.body.touching.down) {
-                    this.isJumping = false
-                }
-            } else if (inputs.veritcal == VerticalMovement.JUMP) {
+            if (inputs.veritcal === VerticalMovement.JUMP && this.isJumping === false) {
                 this.isJumping = true
                 this.currentSprite.setVelocity(
                     this.horizontalMovementToJumpVelocity(inputs.horizontal),
                     -1000
                 )
-            } else if (this.isJumping == false) {
+            } else if (this.isJumping === false) {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
                         xAdjustment -= 3
@@ -69,6 +68,10 @@ export default class PlayerState {
                         break;
                 }
                 this.currentSprite.setX(xAdjustment)
+            }
+
+            if (inputs.action === Input.Action.ATTACK) {
+                this.performAttack()
             }
         }
     }

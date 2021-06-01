@@ -51,7 +51,7 @@ class Current {
 export default class FightScene extends Phaser.Scene {
     current: Current = new Current();
     inputTextLines = new Array<Phaser.GameObjects.Text>()
-    recentMovementInputs = new Array<Movement.MovementUpdate>()
+    recentMovementInputs = new Array<Input.InputUpdate>()
     constructor() {
         super('FightScene')
     }
@@ -93,15 +93,10 @@ export default class FightScene extends Phaser.Scene {
         if (this.input.gamepad.total === 0) {
             this.input.gamepad.once('connected', pad => {
                 this.current.gamepadEventHandler = new Input.GamepadInputHandler(pad)
-                this.current.gamepadEventHandler.register((movementUpdate, time) => {
-                    this.current.p1?.update(movementUpdate)
-                    this.recentMovementInputs.unshift(movementUpdate)
+                this.current.gamepadEventHandler.register((inputUpdate, time) => {
+                    this.current.p1?.update(inputUpdate)
+                    this.recentMovementInputs.unshift(inputUpdate)
                 })
-                pad.on(Phaser.Input.Gamepad.Events.BUTTON_DOWN, (index, value, button) => {
-                    if (index === 0) {
-                        this.current.p1?.performAttack()
-                    }
-                });
             });
         } else {
             // this.current.pad = this.input.gamepad.pad1;
@@ -109,9 +104,9 @@ export default class FightScene extends Phaser.Scene {
         this.current.keyboard = new Input.KeyboardInputHandler(
             this.input.keyboard
         )
-        this.current.keyboard.register((movementUpdate, time) => {
-            this.current.p1?.update(movementUpdate)
-            this.recentMovementInputs.unshift(movementUpdate)
+        this.current.keyboard.register((inputUpdate, time) => {
+            this.current.p1?.update(inputUpdate)
+            this.recentMovementInputs.unshift(inputUpdate)
         })
         this.current.keyboard.configure()
         this.current.p1.configure(this, ground)
@@ -129,7 +124,6 @@ export default class FightScene extends Phaser.Scene {
                 this.add.text(20, y, "")
             )
         }
-
     }
 
     updateInputText() {
