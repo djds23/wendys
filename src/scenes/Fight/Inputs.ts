@@ -38,7 +38,7 @@ class GamepadInputHandler implements InputHandler {
     update(time, delta) {
         let stickXY = this.gamepad.leftStick
         let previousInput = this.updateBuffer[this.updateBuffer.length - 1]
-
+        let action = this.actionForPad()
         // update the buffer before further calculations
         this.updateBuffer.push({ position: stickXY, time: time })
 
@@ -46,24 +46,25 @@ class GamepadInputHandler implements InputHandler {
         // and 
         if (previousInput == null) {
             if (this.stickVectorEquality(stickXY, this.stickOrigin) == false) {
-                this.updateCallbacks(null, stickXY, time)
+                this.updateCallbacks(time, action)
             }
+        } else if (action !== Action.NONE) { 
+            this.updateCallbacks(time, action)
         } else {
             let previousXY = previousInput.position
             let previousAtOrigin = this.stickVectorEquality(previousXY, this.stickOrigin)
             let hasntMoved = this.stickVectorEquality(previousXY, stickXY)
             let stuckAtOrigin = previousAtOrigin && hasntMoved
             if (stuckAtOrigin == false) {
-                this.updateCallbacks(previousXY, stickXY, time)
-            }
+                this.updateCallbacks(time, action)
+            } 
             this.updateBuffer = R.takeLast(Constants.EXPECTED_FPS_RUNTIME, this.updateBuffer)
         }
     }
-    updateCallbacks(previousHead: Phaser.Math.Vector2 | null, newHead: Phaser.Math.Vector2, time: number) {
+    updateCallbacks(time: number, action: Action) {
         this.callbacks.forEach((callback) => {
             let direction = leftStickToHorizontalMovement(this.gamepad.leftStick)
             let jump = leftStickToVerticalMovement(this.gamepad.leftStick)
-            let action = this.actionForPad()
             let inputUpdate = new InputUpdate(direction, jump, action)
             callback(inputUpdate, time)
         })
