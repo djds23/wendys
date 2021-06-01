@@ -89,8 +89,9 @@ export default class PlayerState {
 
     performAttack() {
         if (this.isAttacking()) return;
-        this.currentSprite?.setVisible(false)
+        this.currentSprite?.setVisible(false)        
         this.attack.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
+        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
         this.currentSprite = this.attack
         this.attack?.play('attack').on(Phaser.Animations.Events.ANIMATION_COMPLETE, (anim, frame, gameObject) => {
             this.attack.disableBody(true, true)
