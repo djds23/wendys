@@ -31,8 +31,15 @@ export default class PlayerState {
 
     // Call in create to finish configuring object
     configure(scene: Phaser.Scene, ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
-        scene.physics.add.collider(this.attack, ground)
-        scene.physics.add.collider(this.idle, ground)
+        this.attack.body.setAllowRotation(false)
+        scene.physics.add.collider(this.attack, ground, (_obj1, _obj2) => { 
+            this.attack.setVelocity(0, 0)
+        })
+        
+        this.idle.body.setAllowRotation(false)
+        scene.physics.add.collider(this.idle, ground, (_obj1, _obj2) => { 
+            this.idle.setVelocity(0, 0)
+        })
     }
     /*
         Try call this every update
@@ -43,10 +50,8 @@ export default class PlayerState {
             if (this.isJumping) {
                 if (this.currentSprite.body.touching.down) {
                     this.isJumping = false
-                    this.currentSprite.setVelocity(0, 0)
                 }
             } else if (inputs.veritcal == VerticalMovement.JUMP) {
-                // console.log(inputs)
                 this.isJumping = true
                 this.currentSprite.setVelocity(
                     this.horizontalMovementToJumpVelocity(inputs.horizontal),

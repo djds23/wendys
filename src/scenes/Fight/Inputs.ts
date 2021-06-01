@@ -62,12 +62,8 @@ class GamepadInputHandler implements InputHandler {
     updateCallbacks(previousHead: Phaser.Math.Vector2 | null, newHead: Phaser.Math.Vector2, time: number) {
         this.callbacks.forEach((callback) => {
             let direction = leftStickToHorizontalMovement(this.gamepad.leftStick)
-            let ceiledX = Math.round(newHead.x)
-            // console.log("direction " + direction + " ceiledX " + ceiledX + " originX " + newHead.x + " at time " + time)
             let jump = leftStickToVerticalMovement(this.gamepad.leftStick)
-            let playerFacingDirection = Movement.HorizontalMovement.RIGHT
-            let style = this.movementStyleForInputBuffer(previousHead, newHead)
-            let movementUpdate = new Movement.MovementUpdate(direction, jump, playerFacingDirection, style)
+            let movementUpdate = new Movement.MovementUpdate(direction, jump)
             callback(movementUpdate, time)
         })
     }
@@ -190,9 +186,7 @@ class KeyboardInputHandler implements InputHandler {
             })
             return new Movement.MovementUpdate(
                 horizontal, 
-                vertical, 
-                Movement.HorizontalMovement.RIGHT, 
-                Movement.MovementStyle.RUN
+                vertical
             )
         }
     }

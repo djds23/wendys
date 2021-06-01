@@ -2,25 +2,14 @@ class MovementUpdate {
     // direction you are moving
     horizontal: HorizontalMovement
     veritcal: VerticalMovement
-    style: MovementStyle
-
 
     // direction you are facing
-    facing: HorizontalMovement
     constructor(
         horizontal: HorizontalMovement,
-        veritcal: VerticalMovement,
-        facing: HorizontalMovement,
-        style: MovementStyle
+        veritcal: VerticalMovement
         ) {
         this.horizontal = horizontal
         this.veritcal = veritcal
-        this.facing = facing
-        this.style = style
-    }
-
-    isFacingOpponent(): boolean {
-        return this.horizontal == this.facing
     }
 }
 
