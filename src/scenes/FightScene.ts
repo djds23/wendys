@@ -1,8 +1,6 @@
 import Phaser from 'phaser'
 import PlayerState from './Fight/PlayerState'
-import * as Movement from './Movement/Movement'
-import TimeUpdate from './Fight/Time'
-import * as Input from './Fight/Inputs'
+import * as Input from '../Inputs'
 import * as current from './Current'
 import Environment from '../Environment'
 
@@ -60,6 +58,9 @@ export default class FightScene extends Phaser.Scene {
     }
 
     create() {
+        this.inputTextLines = []
+        this.recentMovementInputs = []
+
         this.addInputText()
         let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
         // Animation set
@@ -89,8 +90,8 @@ export default class FightScene extends Phaser.Scene {
 
         if (this.input.gamepad.total === 0) {
             this.input.gamepad.once('connected', pad => {
-                current.state.gamepadEventHandler = new Input.GamepadInputHandler(pad)
-                current.state.gamepadEventHandler.register((inputUpdate, time) => {
+                current.state.gamepadEventHandler?.configure(this)
+                current.state.gamepadEventHandler?.register((inputUpdate, time) => {
                     current.state.p1?.update(inputUpdate)
                     this.recentMovementInputs.unshift(inputUpdate)
                 })
@@ -98,15 +99,20 @@ export default class FightScene extends Phaser.Scene {
         } else {
             // this.current.pad = this.input.gamepad.pad1;
         }
-        current.state.keyboard = new Input.KeyboardInputHandler(
-            this.input.keyboard
-        )
+        current.state.keyboard = new Input.KeyboardInputHandler()
         current.state.keyboard.register((inputUpdate, time) => {
             current.state.p1?.update(inputUpdate)
             this.recentMovementInputs.unshift(inputUpdate)
         })
-        current.state.keyboard.configure()
+        current.state.gamepadEventHandler = new Input.GamepadInputHandler()
+        current.state.gamepadEventHandler?.configure(this)
+        current.state.keyboard.configure(this)
         current.state.p1.configure(ground)
+
+        this.events.on(Phaser.Scenes.Events.RESUME, () => {
+            current.state.gamepadEventHandler?.configure(this)
+            current.state.keyboard?.configure(this)
+        })
     }
 
     update(time, delta) {

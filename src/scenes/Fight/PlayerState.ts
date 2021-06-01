@@ -2,7 +2,9 @@ import { Vertices } from 'matter'
 import Phaser, { Physics } from 'phaser'
 import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
 import TimeUpdate from './Time'
-import * as Input from './Inputs'
+import * as Input from '../../Inputs'
+import FightScene from '../FightScene'
+import PauseScene from '../PauseScene'
 
 export default class PlayerState {
     idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -106,11 +108,16 @@ export default class PlayerState {
     }
 
     requestPause() {
-        let plugin = new Phaser.Scenes.ScenePlugin(this.scene)
-        if (plugin.isPaused()) {
-            plugin.start()
+        console.log('request pause')
+        let manager = this.scene.game.scene
+        if (manager.isPaused(FightScene.key)) {
+            console.log('starting')
+            manager.pause(PauseScene.key)
+            manager.resume(FightScene.key)
         } else {
-            plugin.pause()
+            console.log('pausing')
+            manager.pause(FightScene.key)
+            manager.start(PauseScene.key)
         }
     }
 

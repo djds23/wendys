@@ -1,5 +1,5 @@
 import PlayerState from './Fight/PlayerState'
-import * as Input from './Fight/Inputs'
+import * as Input from '../Inputs'
 
 class Current {
     p1: PlayerState | null = null
@@ -8,6 +8,7 @@ class Current {
     gamepadEventHandler: Input.GamepadInputHandler | null = null
     keyboard: Input.KeyboardInputHandler | null = null
 }
+
 const state = new Current()
 export {
     state
