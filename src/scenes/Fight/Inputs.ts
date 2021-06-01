@@ -78,52 +78,6 @@ class GamepadInputHandler implements InputHandler {
         }
     }
 
-    movementStyleForInputBuffer(previousHead: Phaser.Math.Vector2 | null, newHead: Phaser.Math.Vector2): Movement.MovementStyle {
-        if (Math.round(newHead.x) == 0) {
-            // console.log('stationary movement')
-            return Movement.MovementStyle.STATIONARY
-        } else {
-            // if the new head is not == 0 and the previous one is, 
-            // we need to check if one of the last 60 positions is 
-            // 
-            // Reversed for docs
-            //
-            // R SSSS R == DASH
-            // L SSSSSSSS == RUN
-            // L SSSR == RUN
-            // LLLLLLLLLLL == RUN
-            // S == STATIONARY
-            if (previousHead != null && Math.round(previousHead.x) == 0) { // Posible Dash / Run
-                // if the stick is not centered and the previous position is STATIONARY
-                // We are either RUNNING or DASHING
-                // count backwards through the array 
-                // already checked the first two
-                // Check to see that we are facing the same direction still
-                // console.log("Dash check!")
-                let currentXOrientation = newHead.x > 0
-                for (let i=this.updateBuffer.length - 3; i < 0; i--) {
-                    let currentInput = this.updateBuffer[i]
-                    let currentX = currentInput.position.x
-                    let isStationary = Math.round(currentX) == 0
-                    if (isStationary == false) {
-                        // if direction, neutral, then same direction happen, perform a dash
-                        if (currentX > 0 == currentXOrientation) {
-                            return Movement.MovementStyle.DASH
-                        } else {
-                        // if direction, neutral, then different direction happen, perform a run
-                            return Movement.MovementStyle.RUN
-                        }
-                    }
-                }
-                
-                // If we make it to the end of the buffer and never found a different direction, start a run
-                return Movement.MovementStyle.RUN
-            } else { // If we are not stationary or dashing, we are running
-                return Movement.MovementStyle.RUN 
-            }
-
-        }
-    }
     stickVectorEquality(lhs: Phaser.Math.Vector2, rhs: Phaser.Math.Vector2): boolean {
         return Math.round(lhs.x) == Math.round(rhs.x) && 
         Math.round(lhs.y) == Math.round(rhs.y)
