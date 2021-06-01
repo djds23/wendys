@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 
-import FightScene from './scenes/FightScene'
+import FightScene from './scenes/Fight/FightScene'
 import PauseScene from './scenes/PauseScene'
 
 const config: Phaser.Types.Core.GameConfig = {

@@ -1,8 +1,8 @@
 import Phaser from 'phaser'
-import PlayerState from './Fight/PlayerState'
-import * as Input from '../Inputs'
-import * as current from './Current'
-import Environment from '../Environment'
+import PlayerState from './PlayerState'
+import * as Input from '../../Inputs'
+import * as current from '../Current'
+import Environment from '../../Environment'
 
 
 interface Asset {
@@ -88,38 +88,42 @@ export default class FightScene extends Phaser.Scene {
             this
         )
 
-        if (this.input.gamepad.total === 0) {
-            this.input.gamepad.once('connected', pad => {
-                current.state.gamepadEventHandler?.configure(this)
-                current.state.gamepadEventHandler?.register((inputUpdate, time) => {
-                    current.state.p1?.update(inputUpdate)
-                    this.recentMovementInputs.unshift(inputUpdate)
-                })
-            });
-        } else {
-            // this.current.pad = this.input.gamepad.pad1;
-        }
-        current.state.keyboard = new Input.KeyboardInputHandler()
-        current.state.keyboard.register((inputUpdate, time) => {
-            current.state.p1?.update(inputUpdate)
-            this.recentMovementInputs.unshift(inputUpdate)
-        })
         current.state.gamepadEventHandler = new Input.GamepadInputHandler()
         current.state.gamepadEventHandler?.configure(this)
+
+        current.state.keyboard = new Input.KeyboardInputHandler()
         current.state.keyboard.configure(this)
         current.state.p1.configure(ground)
+        this.registerInputCallbacks()
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
             current.state.gamepadEventHandler?.configure(this)
             current.state.keyboard?.configure(this)
+            this.registerInputCallbacks()
         })
+
+        this.events.on(Phaser.Scenes.Events.PAUSE, () => {
+            current.state.gamepadEventHandler?.removeFromScene(this)
+            current.state.keyboard?.removeFromScene(this)
+        })
+    }
+
+    registerInputCallbacks() {
+        current.state.keyboard?.register((input, time) => this.handleInput(input, time))
+        current.state.gamepadEventHandler?.register((input, time) => this.handleInput(input, time))
+    }
+
+    handleInput(inputUpdate: Input.InputUpdate, time: number) {
+        console.log(FightScene.key + ";" + time + ";" + JSON.stringify(inputUpdate))
+        current.state.p1?.update(inputUpdate)
+        this.recentMovementInputs.unshift(inputUpdate)
+        this.updateInputText()
     }
 
     update(time, delta) {
         current.state.gamepadEventHandler?.update(time, delta)
         current.state.keyboard?.update(time, delta)
         // this.current.dummy?.update(time, delta)
-        this.updateInputText()
     }
 
     addInputText() {

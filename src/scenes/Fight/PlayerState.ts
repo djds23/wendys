@@ -3,7 +3,7 @@ import Phaser, { Physics } from 'phaser'
 import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
 import TimeUpdate from './Time'
 import * as Input from '../../Inputs'
-import FightScene from '../FightScene'
+import FightScene from './FightScene'
 import PauseScene from '../PauseScene'
 
 export default class PlayerState {
@@ -108,14 +108,8 @@ export default class PlayerState {
     }
 
     requestPause() {
-        console.log('request pause')
         let manager = this.scene.game.scene
-        if (manager.isPaused(FightScene.key)) {
-            console.log('starting')
-            manager.pause(PauseScene.key)
-            manager.resume(FightScene.key)
-        } else {
-            console.log('pausing')
+        if (manager.isPaused(FightScene.key) == false) {
             manager.pause(FightScene.key)
             manager.start(PauseScene.key)
         }
