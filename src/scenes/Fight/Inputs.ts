@@ -1,4 +1,4 @@
-import Phaser from 'phaser'
+import Phaser, { Input } from 'phaser'
 import * as R from 'ramda' 
 import * as Constants from '../Constants'
 import * as Movement from '../Movement/Movement'
@@ -9,16 +9,25 @@ interface InputHandler {
     update(time: number, delta: number): void
 }
 
-function leftStickToHorizontalMovement(vector: Phaser.Math.Vector2): Movement.HorizontalMovement {
-    let ceiledX = Phaser.Math.Fuzzy.Floor(vector.x, 0.1)
-    if (ceiledX < 0) return Movement.HorizontalMovement.LEFT;
-    if (ceiledX > 0) return Movement.HorizontalMovement.RIGHT;
-    return Movement.HorizontalMovement.STATIONARY; // If 0, then stationary
+class InputUpdate {
+    // direction you are moving
+    horizontal: Movement.HorizontalMovement
+    veritcal: Movement.VerticalMovement
+    action: Action
+    // direction you are facing
+    constructor(
+        horizontal: Movement.HorizontalMovement,
+        veritcal: Movement.VerticalMovement,
+        action: Action
+        ) {
+        this.horizontal = horizontal
+        this.veritcal = veritcal
+        this.action = action
+    }
 }
 
-function leftStickToVerticalMovement(vector: Phaser.Math.Vector2): Movement.VerticalMovement {
-    if (vector.y < -0.9) return Movement.VerticalMovement.JUMP;
-    return Movement.VerticalMovement.STATIONARY;
+enum Action {
+    DASH="DASH", ATTACK="ATTACK", SPECIAL="SPECIAL", NONE="NO-INPUT"
 }
 
 class GamepadInputHandler implements InputHandler {
@@ -63,13 +72,23 @@ class GamepadInputHandler implements InputHandler {
     }
     updateCallbacks(time: number, action: Action) {
         this.callbacks.forEach((callback) => {
-            let direction = leftStickToHorizontalMovement(this.gamepad.leftStick)
-            let jump = leftStickToVerticalMovement(this.gamepad.leftStick)
+            let direction = this.leftStickToHorizontalMovement(this.gamepad.leftStick)
+            let jump = this.leftStickToVerticalMovement(this.gamepad.leftStick)
             let inputUpdate = new InputUpdate(direction, jump, action)
             callback(inputUpdate, time)
         })
     }
-
+    leftStickToHorizontalMovement(vector: Phaser.Math.Vector2): Movement.HorizontalMovement {
+        let ceiledX = Phaser.Math.Fuzzy.Floor(vector.x, 0.1)
+        if (ceiledX < 0) return Movement.HorizontalMovement.LEFT;
+        if (ceiledX > 0) return Movement.HorizontalMovement.RIGHT;
+        return Movement.HorizontalMovement.STATIONARY; // If 0, then stationary
+    }
+    
+    leftStickToVerticalMovement(vector: Phaser.Math.Vector2): Movement.VerticalMovement {
+        if (vector.y < -0.9) return Movement.VerticalMovement.JUMP;
+        return Movement.VerticalMovement.STATIONARY;
+    }
     actionForPad(): Action {
         if (this.gamepad.isButtonDown(0)) {
             return Action.ATTACK
@@ -193,31 +212,61 @@ class KeyboardInputHandler implements InputHandler {
     }
 }
 
-enum Action {
-    DASH="DASH", ATTACK="ATTACK", SPECIAL="SPECIAL", NONE="NO-INPUT"
-}
-
-class InputUpdate {
-    // direction you are moving
-    horizontal: Movement.HorizontalMovement
-    veritcal: Movement.VerticalMovement
-    action: Action
-    // direction you are facing
-    constructor(
-        horizontal: Movement.HorizontalMovement,
-        veritcal: Movement.VerticalMovement,
-        action: Action
-        ) {
-        this.horizontal = horizontal
-        this.veritcal = veritcal
-        this.action = action
+class DummyInputHandler implements InputHandler {
+    callbacks: Array<(update: InputUpdate, time: number) => void> = []
+    cycle: Array<InputUpdate> = []
+    currentIndex: number = 0
+    constructor() {
+        this.cycle.push(
+            new InputUpdate(
+                Movement.HorizontalMovement.LEFT,
+                Movement.VerticalMovement.STATIONARY,
+                Action.NONE  
+            )
+        )
+        this.cycle.push(
+            new InputUpdate(
+                Movement.HorizontalMovement.LEFT,
+                Movement.VerticalMovement.STATIONARY,
+                Action.NONE  
+            )
+        )
+        this.cycle.push(
+            new InputUpdate(
+                Movement.HorizontalMovement.RIGHT,
+                Movement.VerticalMovement.STATIONARY,
+                Action.NONE  
+            )
+        )
+        this.cycle.push(
+            new InputUpdate(
+                Movement.HorizontalMovement.RIGHT,
+                Movement.VerticalMovement.STATIONARY,
+                Action.NONE  
+            )
+        )
     }
-}
 
+    register(callback: (update: InputUpdate, time: number) => void): void {
+        this.callbacks.push(callback)
+    }
+
+    configure(): void { }
+
+    update(time: number, delta: number): void {
+        if (time % 5 == 0) {
+            this.callbacks.forEach(callback => callback(this.cycle[this.currentIndex], time))
+            let nextIndex = this.currentIndex + 1
+            this.currentIndex = nextIndex > this.cycle.length - 1 ? 0 : nextIndex
+        }
+    }
+
+}
 export {
     GamepadInputHandler,
     KeyboardInputHandler,
     InputHandler,
     Action,
-    InputUpdate
+    InputUpdate,
+    DummyInputHandler
 }

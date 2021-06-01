@@ -44,6 +44,7 @@ class Stage {
 class Current {
     p1: PlayerState | null = null
     input: Input.InputHandler | null = null
+    dummy: Input.DummyInputHandler | null = null
     gamepadEventHandler: Input.GamepadInputHandler | null = null
     keyboard: Input.KeyboardInputHandler | null = null
 }
@@ -109,12 +110,20 @@ export default class FightScene extends Phaser.Scene {
             this.recentMovementInputs.unshift(inputUpdate)
         })
         this.current.keyboard.configure()
+
+        this.current.dummy = new Input.DummyInputHandler()
+        this.current.dummy.configure()
+        this.current.dummy.register((inputUpdate, time) => {
+            this.current.p1?.update(inputUpdate)
+            this.recentMovementInputs.unshift(inputUpdate)
+        })
         this.current.p1.configure(this, ground)
     }
 
     update(time, delta) {
         this.current.gamepadEventHandler?.update(time, delta)
         this.current.keyboard?.update(time, delta)
+        // this.current.dummy?.update(time, delta)
         this.updateInputText()
     }
 
