@@ -5,6 +5,7 @@ import TimeUpdate from './Time'
 import * as Input from '../../Inputs'
 import FightScene from './FightScene'
 import PauseScene from '../PauseScene'
+import * as R from 'ramda'
 
 export default class PlayerState {
     idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -75,9 +76,9 @@ export default class PlayerState {
                 this.currentSprite.setX(xAdjustment)
             }
 
-            if (inputs.action === Input.Action.ATTACK) {
+            if (R.contains(Input.Action.ATTACK, inputs.actions)) {
                 this.performAttack()
-            } else if (inputs.action === Input.Action.START) {
+            } else if (R.contains(Input.Action.START, inputs.actions)) {
                 this.requestPause()
             }
         }

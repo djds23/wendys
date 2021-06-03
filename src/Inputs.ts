@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import * as Movement from './scenes/Movement/Movement'
 
 interface InputHandler {
-    register(callback: (update: InputUpdate, time: number) => void): void
+    register(callback: (update: InputUpdate) => void): void
 
     configure(scene: Phaser.Scene): void
     removeFromScene(scene: Phaser.Scene): void
@@ -15,23 +15,25 @@ class InputUpdate {
     // direction you are moving
     horizontal: Movement.HorizontalMovement
     veritcal: Movement.VerticalMovement
-    action: Action
-    // direction you are facing
+    actions: Array<Action>
+    time: number
     constructor(
         horizontal: Movement.HorizontalMovement,
         veritcal: Movement.VerticalMovement,
-        action: Action
+        actions: Array<Action>,
+        time: number
         ) {
         this.horizontal = horizontal
         this.veritcal = veritcal
-        this.action = action
+        this.actions = actions
+        this.time = time
     }
 
     equals(otherInput: InputUpdate | null): boolean {
         if (otherInput == null) {
             return false
         } else {
-            return (this.action === otherInput.action) && 
+            return (R.equals(this.actions, otherInput.actions)) && 
             (this.veritcal === otherInput.veritcal) &&
             (this.horizontal === otherInput.horizontal)
         }
@@ -44,7 +46,7 @@ enum Action {
 
 class Step {
     timeSinceAccept: number = 0
-    acceptanceLimit: number = 50
+    acceptanceLimit: number = 20
     shouldStepWithDelta(delta: number) {
         this.timeSinceAccept += delta
         if (this.timeSinceAccept > this.acceptanceLimit) {
@@ -59,28 +61,15 @@ class Step {
 class GamepadInputHandler implements InputHandler {
     gamepad: Phaser.Input.Gamepad.Gamepad | null = null
     previousUpdate: InputUpdate | null = null
-    callbacks: Array<(update: InputUpdate, time: number) => void> = []
-   
+    callbacks: Array<(update: InputUpdate) => void> = []
     configure(scene: Phaser.Scene) { 
         if (scene.input.gamepad.total == 0) {
             scene.input.gamepad.on(Phaser.Input.Gamepad.Events.CONNECTED, (pad) => {
                 this.gamepad = pad
-                this.gamepad?.on(Phaser.Input.Gamepad.Events.GAMEPAD_BUTTON_UP, (index, value, button) => {
-                    if (index === 9) {
-                        let newUpdate = this.inputUpdateFor(pad)
-                        this.updateCallbacks(newUpdate, pad.timestamp)
-                    }
-                })  
             })
         } else {
             let newPad = scene.input.gamepad.pad1
             this.gamepad = newPad
-            this.gamepad?.on(Phaser.Input.Gamepad.Events.GAMEPAD_BUTTON_UP, (index, value, button) =>{
-                if (index === 9) {
-                    let newUpdate = this.inputUpdateFor(newPad)
-                    this.updateCallbacks(newUpdate, newPad.timestamp)
-                }
-            })  
         }
 
     }
@@ -91,7 +80,7 @@ class GamepadInputHandler implements InputHandler {
         this.gamepad?.removeListener(Phaser.Input.Gamepad.Events.CONNECTED)
     }
 
-    register(callback: (update: InputUpdate, time: number) => void) {
+    register(callback: (update: InputUpdate) => void) {
         this.callbacks.push(callback)
     }
 
@@ -100,23 +89,21 @@ class GamepadInputHandler implements InputHandler {
             console.log("Attempting to update gamepad when none attached")
             return;
         }
-        let newUpdate = this.inputUpdateFor(this.gamepad)
+        let newUpdate = this.inputUpdateFor(this.gamepad, time)
 
-        if (newUpdate.equals(this.previousUpdate) === false) {
-            this.updateCallbacks(newUpdate, time)
-        }
+        this.updateCallbacks(newUpdate)
     }
 
-    inputUpdateFor(gamepad: Phaser.Input.Gamepad.Gamepad): InputUpdate {
+    inputUpdateFor(gamepad: Phaser.Input.Gamepad.Gamepad, time: number): InputUpdate {
         let direction = this.leftStickToHorizontalMovement(gamepad.leftStick)
         let jump = this.leftStickToVerticalMovement(gamepad.leftStick)
-        let action = this.actionForPad(gamepad)
-        return new InputUpdate(direction, jump, action)
+        let actions = this.actionsForPad(gamepad)
+        return new InputUpdate(direction, jump, actions, time)
     }
 
-    updateCallbacks(inputUpdate: InputUpdate, time: number) {
+    updateCallbacks(inputUpdate: InputUpdate) {
         this.callbacks.forEach((callback) => {
-            callback(inputUpdate, time)
+            callback(inputUpdate)
         })
     }
 
@@ -131,12 +118,14 @@ class GamepadInputHandler implements InputHandler {
         if (vector.y < -0.9) return Movement.VerticalMovement.JUMP;
         return Movement.VerticalMovement.STATIONARY;
     }
-    actionForPad(gamepad:Phaser.Input.Gamepad.Gamepad): Action {
+    actionsForPad(gamepad:Phaser.Input.Gamepad.Gamepad): Array<Action> {
+        let output = new Array<Action>()
         if (gamepad.isButtonDown(0)) {
-            return Action.ATTACK
-        } else {
-            return Action.NONE
+            output.push(Action.ATTACK)
+        } else if (gamepad.isButtonDown(9)){
+            output.push(Action.START)
         }
+        return output
     }
 
     stickVectorEquality(lhs: Phaser.Math.Vector2, rhs: Phaser.Math.Vector2): boolean {
@@ -208,9 +197,9 @@ class UnhandledKeyError extends Error {
 class KeyboardInputHandler implements InputHandler {
 
     keys: Array<KeyToInputs> = []
-    callbacks: Array<(update: InputUpdate, time: number) => void> = []
+    callbacks: Array<(update: InputUpdate) => void> = []
 
-    register(callback: (update: InputUpdate, time: number) => void) {
+    register(callback: (update: InputUpdate) => void) {
         this.callbacks.push(callback)
     }
 
@@ -233,21 +222,21 @@ class KeyboardInputHandler implements InputHandler {
 
     update(time: number, delta: number) {
         let downKeys = this.keys.filter((value) => value.key.isDown)
-        let inputUpdate = this.keyToUpdate(downKeys)
+        let inputUpdate = this.keyToUpdate(downKeys, time)
         if (inputUpdate != null) {
             this.callbacks.forEach((callback) => {
-                callback(inputUpdate!, time)
+                callback(inputUpdate!)
             })
         }
     }
 
-    keyToUpdate(downKeys: Array<KeyToInputs>): InputUpdate | null {
+    keyToUpdate(downKeys: Array<KeyToInputs>, time: number): InputUpdate | null {
         if (R.isEmpty(downKeys)) {
             return null
         } else {
             let vertical = Movement.VerticalMovement.STATIONARY
             let horizontal = Movement.HorizontalMovement.STATIONARY
-            let action = Action.NONE
+            let actionOutput = new Array<Action>()
             downKeys.forEach((keyToInput) => {
                 if (keyToInput.verticalMovement != null) {
                     vertical = keyToInput.verticalMovement
@@ -258,13 +247,14 @@ class KeyboardInputHandler implements InputHandler {
                         horizontal =  Movement.HorizontalMovement.STATIONARY
                     }
                 } else if (keyToInput.action != null) {
-                    action = keyToInput.action
+                    actionOutput.push(keyToInput.action)
                 }
             })
             return new InputUpdate(
                 horizontal, 
                 vertical,
-                action
+                actionOutput,
+                time
             )
         }
     }
@@ -274,36 +264,7 @@ class DummyInputHandler implements InputHandler {
     callbacks: Array<(update: InputUpdate, time: number) => void> = []
     cycle: Array<InputUpdate> = []
     currentIndex: number = 0
-    constructor() {
-        this.cycle.push(
-            new InputUpdate(
-                Movement.HorizontalMovement.LEFT,
-                Movement.VerticalMovement.STATIONARY,
-                Action.NONE  
-            )
-        )
-        this.cycle.push(
-            new InputUpdate(
-                Movement.HorizontalMovement.LEFT,
-                Movement.VerticalMovement.STATIONARY,
-                Action.NONE  
-            )
-        )
-        this.cycle.push(
-            new InputUpdate(
-                Movement.HorizontalMovement.RIGHT,
-                Movement.VerticalMovement.STATIONARY,
-                Action.NONE  
-            )
-        )
-        this.cycle.push(
-            new InputUpdate(
-                Movement.HorizontalMovement.RIGHT,
-                Movement.VerticalMovement.STATIONARY,
-                Action.NONE  
-            )
-        )
-    }
+
     removeFromScene(scene: Phaser.Scene): void {
         this.callbacks = []
      }

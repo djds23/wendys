@@ -109,12 +109,12 @@ export default class FightScene extends Phaser.Scene {
     }
 
     registerInputCallbacks() {
-        current.state.keyboard?.register((input, time) => this.handleInput(input, time))
-        current.state.gamepadEventHandler?.register((input, time) => this.handleInput(input, time))
+        current.state.keyboard?.register((input) => this.handleInput(input))
+        current.state.gamepadEventHandler?.register((input) => this.handleInput(input))
     }
 
-    handleInput(inputUpdate: Input.InputUpdate, time: number) {
-        console.log(FightScene.key + ";" + time + ";" + JSON.stringify(inputUpdate))
+    handleInput(inputUpdate: Input.InputUpdate) {
+        console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
         current.state.p1?.update(inputUpdate)
         this.recentMovementInputs.unshift(inputUpdate)
         this.updateInputText()

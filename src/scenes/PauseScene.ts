@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import * as R from 'ramda'
 import * as Input from '../Inputs'
 import * as current from './Current'
 import FightScene from './Fight/FightScene'
@@ -35,14 +36,13 @@ export default class PauseScene extends Phaser.Scene {
     }
 
     registerInputCallbacks() {
-        current.state.keyboard?.register((input, time) => this.handleInput(input, time))
-        current.state.gamepadEventHandler?.register((input, time) => this.handleInput(input, time))
+        current.state.keyboard?.register((input) => this.handleInput(input))
+        current.state.gamepadEventHandler?.register((input) => this.handleInput(input))
     }
 
-    handleInput(inputUpdate: Input.InputUpdate, time: number) {
-        console.log(PauseScene.key + ";" + time + ";" + JSON.stringify(inputUpdate))
-        if (inputUpdate.action === Input.Action.START) {
-            console.log(PauseScene.key + " Ending Pause")
+    handleInput(inputUpdate: Input.InputUpdate) {
+        console.log(PauseScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
+        if (R.contains(Input.Action.START, inputUpdate.actions)) {
             this.game.scene.pause(PauseScene.key)
             this.game.scene.resume(FightScene.key)
         }
