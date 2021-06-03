@@ -3,6 +3,7 @@ import * as Input from '../Inputs'
 
 class Current {
     p1: PlayerState | null = null
+    p2: PlayerState | null = null
     input: Input.InputHandler | null = null
     dummy: Input.DummyInputHandler | null = null
     gamepadEventHandler: Input.GamepadInputHandler | null = null

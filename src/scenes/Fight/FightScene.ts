@@ -3,48 +3,15 @@ import PlayerState from './PlayerState'
 import * as Input from '../../Inputs'
 import * as current from '../Current'
 import Environment from '../../Environment'
-
-
-interface Asset {
-    key: string
-    path: string
-    frameConfig: Phaser.Types.Loader.FileTypes.ImageFrameConfig | undefined
-}
-
-class BlueWitch {
-    static attack: Asset = {
-        key: "assets/images/Blue_witch/B_witch_attack.png",
-        path: "assets/images/Blue_witch/B_witch_attack.png",
-        frameConfig: {
-            frameWidth: 104,
-            frameHeight: 46
-        }
-    }
-
-    static idle: Asset = {
-        key: "assets/images/Blue_witch/B_witch_idle.png",
-        path: "assets/images/Blue_witch/B_witch_idle.png",
-        frameConfig: {
-            frameWidth: 32,
-            frameHeight: 48
-
-        }
-    }
-}
-
-class Stage {
-    static ground: Asset = {
-        key: "assets/images/ground.png",
-        path: "assets/images/ground.png",
-        frameConfig: undefined
-    }
-}
+import { BlueWitch, Stage } from '~/Assets'
+import { Character } from '~/Character'
 
 
 export default class FightScene extends Phaser.Scene {
     static key: string = 'FightScene'
     inputTextLines = new Array<Phaser.GameObjects.Text>()
     recentMovementInputs = new Array<Input.InputUpdate>()
+    blueWitch = new BlueWitch()
     constructor() {
         super(FightScene.key)
     }
@@ -53,8 +20,8 @@ export default class FightScene extends Phaser.Scene {
         this.load.setBaseURL(Environment.baseURL)
 
         this.load.image(Stage.ground.key, Stage.ground.path)
-        this.load.spritesheet(BlueWitch.attack.key, BlueWitch.attack.path, BlueWitch.attack.frameConfig)
-        this.load.spritesheet(BlueWitch.idle.key, BlueWitch.idle.path, BlueWitch.idle.frameConfig)
+        this.load.spritesheet(this.blueWitch.attack.key, this.blueWitch.attack.path, this.blueWitch.attack.frameConfig)
+        this.load.spritesheet(this.blueWitch.idle.key, this.blueWitch.idle.path, this.blueWitch.idle.frameConfig)
     }
 
     create() {
@@ -63,28 +30,14 @@ export default class FightScene extends Phaser.Scene {
 
         this.addInputText()
         let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
-        // Animation set
-        this.anims.create({
-            key: "idle",
-            frames: this.anims.generateFrameNumbers(BlueWitch.idle.key, { frames: [0, 1, 2, 3, 4, 5] }),
-            frameRate: 8,
-            repeat: -1,
-            duration: 2
-        });
 
-        // Animation set
-        this.anims.create({
-            key: "attack",
-            frames: this.anims.generateFrameNumbers(BlueWitch.attack.key, { frames: [0, 1, 2, 3, 4, 5, 6, 7, 8] }),
-            frameRate: 9,
-            duration: 0.1
-        });
-
-        let idle = this.physics.add.sprite(0, 0, BlueWitch.idle.key, 0)
-        let attack = this.physics.add.sprite(0, 0, BlueWitch.attack.key, 0)
         current.state.p1 = new PlayerState(
-            idle,
-            attack,
+            new Character(this.blueWitch, this, 0),
+            this
+        )
+
+        current.state.p2 = new PlayerState(
+            new Character(this.blueWitch, this, 700),
             this
         )
 
@@ -93,7 +46,8 @@ export default class FightScene extends Phaser.Scene {
 
         current.state.keyboard = new Input.KeyboardInputHandler()
         current.state.keyboard.configure(this)
-        current.state.p1.configure(ground)
+        current.state.p1.configure(ground, current.state.p2.character.sprites())
+        current.state.p2.configure(ground, current.state.p1.character.sprites())
         this.registerInputCallbacks()
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {

@@ -1,53 +1,52 @@
-import { Vertices } from 'matter'
-import Phaser, { Physics } from 'phaser'
+import Phaser from 'phaser'
 import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
-import TimeUpdate from './Time'
 import * as Input from '../../Inputs'
 import FightScene from './FightScene'
 import PauseScene from '../PauseScene'
 import * as R from 'ramda'
+import { Character } from '~/Character'
 
 export default class PlayerState {
-    idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    character: Character
     currentSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     scene: Phaser.Scene
     isJumping = false
     constructor(
-        idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
-        attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+        character: Character,
         scene: Phaser.Scene
     ) {
         this.scene = scene
-        this.idle = idle
-        this.attack = attack
-        this.currentSprite = idle
-
-        attack.setOrigin(0, 0)
-        attack.setScale(3)
-        attack.setCollideWorldBounds(true)
-        attack.disableBody()
-    
-        idle.setOrigin(0, 0)
-        idle.setScale(3)
-        idle.setCollideWorldBounds(true)
-
-        attack.setVisible(false)
-        idle.play("idle")
+        this.character = character
+        this.currentSprite = character.idle
+        this.character.idle.play("idle")
     }
 
     // Call in create to finish configuring object
-    configure(ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
-        this.attack.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.attack, ground, (_obj1, _obj2) => { 
+    configure(
+        ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody, 
+        otherSprites: Array<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>
+        ) {
+        this.character.attack.body.setAllowRotation(false)
+        this.scene.physics.add.collider(this.character.attack, ground, (_obj1, _obj2) => { 
             this.isJumping = false
-            this.attack.setVelocity(0, 0)
+            this.character.attack.setVelocity(0, 0)
         })
         
-        this.idle.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.idle, ground, (_obj1, _obj2) => { 
+        this.character.idle.body.setAllowRotation(false)
+        this.scene.physics.add.collider(this.character.idle, ground, (_obj1, _obj2) => { 
             this.isJumping = false
-            this.idle.setVelocity(0, 0)
+            this.character.idle.setVelocity(0, 0)
+        })
+
+        otherSprites.forEach((otherSprite) => {
+            this.scene.physics.add.overlap(this.character.attack, otherSprite, (_obj1, _obj2) => { 
+                console.log("attack registered")
+                this.character.attack.anims.frame
+            })
+            
+            this.scene.physics.add.overlap(this.character.idle, otherSprite, (_obj1, _obj2) => { 
+                console.log("I have been struck!")
+            })  
         })
     }
     /*
@@ -98,12 +97,12 @@ export default class PlayerState {
     performAttack() {
         if (this.isAttacking()) return;
         this.currentSprite?.setVisible(false)        
-        this.attack.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
+        this.character.attack.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
         this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
-        this.currentSprite = this.attack
-        this.attack?.play('attack').on(Phaser.Animations.Events.ANIMATION_COMPLETE, (anim, frame, gameObject) => {
-            this.attack.disableBody(true, true)
-            this.currentSprite = this.idle
+        this.currentSprite = this.character.attack
+        this.character.attack?.play('attack').on(Phaser.Animations.Events.ANIMATION_COMPLETE, (anim, frame, gameObject) => {
+            this.character.attack.disableBody(true, true)
+            this.currentSprite = this.character.idle
             this.currentSprite?.setVisible(true)
         });
     }
@@ -117,6 +116,6 @@ export default class PlayerState {
     }
 
     isAttacking(): boolean {
-        return this.attack.visible
+        return this.character.attack.visible
     }
 }
