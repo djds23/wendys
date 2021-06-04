@@ -6,17 +6,19 @@ interface Asset {
     frameConfig: Phaser.Types.Loader.FileTypes.ImageFrameConfig | undefined
 }
 
-interface AttackAsset {
+interface Attackable {
     damageFrames: Array<number>
 }
 
+type AttackAsset = Asset & Attackable
 interface CharacterAsset {
     idle: Asset
-    attack: Asset
+    run: Asset
+    attack: AttackAsset 
 }
 
 class BlueWitch implements CharacterAsset {
-    attack: Asset & AttackAsset= {
+    attack: AttackAsset = {
         key: "assets/images/Blue_witch/B_witch_attack.png",
         path: "assets/images/Blue_witch/B_witch_attack.png",
         frameConfig: {
@@ -24,6 +26,16 @@ class BlueWitch implements CharacterAsset {
             frameHeight: 46
         },
         damageFrames: [6, 7, 8]
+    }
+
+    run: Asset = {
+        key: "assets/images/Blue_witch/B_witch_run.png",
+        path: "assets/images/Blue_witch/B_witch_run.png",
+        frameConfig: {
+            frameWidth: 32,
+            frameHeight: 48
+
+        }
     }
 
     idle: Asset = {

@@ -21,6 +21,7 @@ export default class FightScene extends Phaser.Scene {
 
         this.load.image(Stage.ground.key, Stage.ground.path)
         this.load.spritesheet(this.blueWitch.attack.key, this.blueWitch.attack.path, this.blueWitch.attack.frameConfig)
+        this.load.spritesheet(this.blueWitch.run.key, this.blueWitch.run.path, this.blueWitch.run.frameConfig)
         this.load.spritesheet(this.blueWitch.idle.key, this.blueWitch.idle.path, this.blueWitch.idle.frameConfig)
     }
 
@@ -32,28 +33,24 @@ export default class FightScene extends Phaser.Scene {
         let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
 
         current.state.p1 = new PlayerState(
-            new Character(this.blueWitch, this, 0),
+            new Character(this.blueWitch, this, 0, false),
             this
         )
 
         current.state.p2 = new PlayerState(
-            new Character(this.blueWitch, this, 700),
+            new Character(this.blueWitch, this, 700, true),
             this
         )
 
-        current.state.gamepadEventHandler = new Input.GamepadInputHandler()
-        current.state.gamepadEventHandler?.configure(this)
+        current.state.input = new Input.KeyboardInputHandler()
+        current.state.input.configure(this)
 
-        current.state.keyboard = new Input.KeyboardInputHandler()
-        current.state.keyboard.configure(this)
         current.state.p1.configure(ground, current.state.p2.character.sprites())
         current.state.p2.configure(ground, current.state.p1.character.sprites())
-        this.registerInputCallbacks()
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
             current.state.gamepadEventHandler?.configure(this)
             current.state.keyboard?.configure(this)
-            this.registerInputCallbacks()
         })
 
         this.events.on(Phaser.Scenes.Events.PAUSE, () => {
@@ -62,22 +59,22 @@ export default class FightScene extends Phaser.Scene {
         })
     }
 
-    registerInputCallbacks() {
-        current.state.keyboard?.register((input) => this.handleInput(input))
-        current.state.gamepadEventHandler?.register((input) => this.handleInput(input))
-    }
-
-    handleInput(inputUpdate: Input.InputUpdate) {
-        console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
-        current.state.p1?.update(inputUpdate)
-        this.recentMovementInputs.unshift(inputUpdate)
-        this.updateInputText()
-    }
-
     update(time, delta) {
-        current.state.gamepadEventHandler?.update(time, delta)
-        current.state.keyboard?.update(time, delta)
-        // this.current.dummy?.update(time, delta)
+        if (current.state.input != null) {
+            let inputUpdate = current.state.input.update(time, delta)
+            current.state.p1?.update(        
+                inputUpdate
+            )
+            current.state.p1?.update(inputUpdate)
+
+            if (inputUpdate != null) {
+                // console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
+                this.recentMovementInputs.unshift()
+                this.updateInputText()
+            }
+        } else {
+            current.state.p1?.update(null)
+        }
     }
 
     addInputText() {

@@ -3,12 +3,10 @@ import * as R from 'ramda'
 import * as Movement from './scenes/Movement/Movement'
 
 interface InputHandler {
-    register(callback: (update: InputUpdate) => void): void
-
     configure(scene: Phaser.Scene): void
     removeFromScene(scene: Phaser.Scene): void
 
-    update(time: number, delta: number): void
+    update(time: number, delta: number): InputUpdate | null
 }
 
 class InputUpdate {
@@ -80,18 +78,13 @@ class GamepadInputHandler implements InputHandler {
         this.gamepad?.removeListener(Phaser.Input.Gamepad.Events.CONNECTED)
     }
 
-    register(callback: (update: InputUpdate) => void) {
-        this.callbacks.push(callback)
-    }
 
-    update(time, delta) {
+    update(time, delta): InputUpdate | null {
         if (this.gamepad == null) {
-            console.log("Attempting to update gamepad when none attached")
-            return;
+            // console.log("Attempting to update gamepad when none attached")
+            return null
         }
-        let newUpdate = this.inputUpdateFor(this.gamepad, time)
-
-        this.updateCallbacks(newUpdate)
+        return this.inputUpdateFor(this.gamepad, time)
     }
 
     inputUpdateFor(gamepad: Phaser.Input.Gamepad.Gamepad, time: number): InputUpdate {
@@ -195,13 +188,8 @@ class UnhandledKeyError extends Error {
     }
 }
 class KeyboardInputHandler implements InputHandler {
-
     keys: Array<KeyToInputs> = []
-    callbacks: Array<(update: InputUpdate) => void> = []
 
-    register(callback: (update: InputUpdate) => void) {
-        this.callbacks.push(callback)
-    }
 
     configure(scene: Phaser.Scene) {
         this.keys = [
@@ -217,17 +205,12 @@ class KeyboardInputHandler implements InputHandler {
     }
     
     removeFromScene(scene: Phaser.Scene): void {
-        this.callbacks = []
+
      }
 
-    update(time: number, delta: number) {
+    update(time: number, delta: number): InputUpdate | null {
         let downKeys = this.keys.filter((value) => value.key.isDown)
-        let inputUpdate = this.keyToUpdate(downKeys, time)
-        if (inputUpdate != null) {
-            this.callbacks.forEach((callback) => {
-                callback(inputUpdate!)
-            })
-        }
+        return this.keyToUpdate(downKeys, time)
     }
 
     keyToUpdate(downKeys: Array<KeyToInputs>, time: number): InputUpdate | null {
@@ -261,26 +244,16 @@ class KeyboardInputHandler implements InputHandler {
 }
 
 class DummyInputHandler implements InputHandler {
-    callbacks: Array<(update: InputUpdate, time: number) => void> = []
     cycle: Array<InputUpdate> = []
     currentIndex: number = 0
 
     removeFromScene(scene: Phaser.Scene): void {
-        this.callbacks = []
-     }
-
-    register(callback: (update: InputUpdate, time: number) => void): void {
-        this.callbacks.push(callback)
     }
 
     configure(): void { }
 
-    update(time: number, delta: number): void {
-        if (time % 5 == 0) {
-            this.callbacks.forEach(callback => callback(this.cycle[this.currentIndex], time))
-            let nextIndex = this.currentIndex + 1
-            this.currentIndex = nextIndex > this.cycle.length - 1 ? 0 : nextIndex
-        }
+    update(time: number, delta: number): InputUpdate | null {
+        return null
     }
 
 }

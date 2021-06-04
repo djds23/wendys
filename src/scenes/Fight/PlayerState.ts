@@ -28,31 +28,27 @@ export default class PlayerState {
         ) {
         this.character.attack.body.setAllowRotation(false)
         this.scene.physics.add.collider(this.character.attack, ground, (_obj1, _obj2) => { 
-            this.isJumping = false
             this.character.attack.setVelocity(0, 0)
         })
         
         this.character.idle.body.setAllowRotation(false)
         this.scene.physics.add.collider(this.character.idle, ground, (_obj1, _obj2) => { 
-            this.isJumping = false
             this.character.idle.setVelocity(0, 0)
         })
 
-        otherSprites.forEach((otherSprite) => {
-            this.scene.physics.add.overlap(this.character.attack, otherSprite, (_obj1, _obj2) => { 
-                console.log("attack registered")
-                this.character.attack.anims.frame
-            })
-            
-            this.scene.physics.add.overlap(this.character.idle, otherSprite, (_obj1, _obj2) => { 
-                console.log("I have been struck!")
-            })  
+        this.character.run.body.setAllowRotation(false)
+        this.scene.physics.add.collider(this.character.run, ground, (_obj1, _obj2) => { 
+            this.character.run.setVelocity(0, 0)
         })
     }
     /*
         Try call this every update
     */
     update(inputs: Input.InputUpdate | null) {
+        if (this.currentSprite.body.touching.down) {
+            this.isJumping = false
+        }
+
         if (inputs != null && this.isAttacking() == false) {
             let xAdjustment = this.currentSprite.x
             if (inputs.veritcal === VerticalMovement.JUMP && this.isJumping === false) {
@@ -65,11 +61,14 @@ export default class PlayerState {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
                         xAdjustment -= 3
+                        this.swapToRunAnimationIfNeeded()
                         break;
                     case HorizontalMovement.RIGHT:
                         xAdjustment += 3
+                        this.swapToRunAnimationIfNeeded()
                         break;
                     case HorizontalMovement.STATIONARY:
+                        this.swapToIdleAnimationIfNeeded()
                         break;
                 }
                 this.currentSprite.setX(xAdjustment)
@@ -80,6 +79,8 @@ export default class PlayerState {
             } else if (R.contains(Input.Action.START, inputs.actions)) {
                 this.requestPause()
             }
+        } else {
+            this.swapToIdleAnimationIfNeeded()
         }
     }
 
@@ -92,6 +93,27 @@ export default class PlayerState {
             case HorizontalMovement.STATIONARY:
                 return 0
         }
+    }
+
+    swapToRunAnimationIfNeeded() {
+        if (this.isRunning()) return;
+        this.currentSprite?.setVisible(false)        
+        this.character.run.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
+        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
+        this.currentSprite = this.character.run
+        this.currentSprite.play("run")
+        this.currentSprite.setVisible(true)
+    }
+    
+
+    swapToIdleAnimationIfNeeded() {
+        if (this.isIdle()) return;
+        this.currentSprite?.setVisible(false)        
+        this.character.idle.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
+        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
+        this.currentSprite = this.character.idle
+        this.currentSprite.play("idle")
+        this.currentSprite.setVisible(true)
     }
 
     performAttack() {
@@ -117,5 +139,13 @@ export default class PlayerState {
 
     isAttacking(): boolean {
         return this.character.attack.visible
+    }
+
+    isRunning(): boolean {
+        return this.character.run.visible
+    }
+
+    isIdle(): boolean {
+        return this.character.idle.visible
     }
 }
