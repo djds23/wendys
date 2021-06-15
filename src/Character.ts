@@ -46,24 +46,22 @@ class Character {
     }
 
     idle() {
-        this.updateTexture(this.asset.idle.key, "idle")
+        this.sprite.setTexture(this.asset.idle.key).play("idle")
     }
 
     run() {
-        this.updateTexture(this.asset.run.key, "run")
+        this.sprite.setTexture(this.asset.run.key, 2).play("run")
     }
 
     attack() {
-        this.updateTexture(this.asset.attack.key, "attack")
-    }
-
-    updateTexture(asset: string, animation: string) {
-        this.sprite.setTexture(asset)
-        this.sprite.play(animation)
+        this.sprite.setTexture(this.asset.attack.key).play("attack")
     }
 
     isAttacking(): boolean {
-        return this.asset.attack.key === this.sprite.texture.key
+        return (
+            this.asset.attack.key === this.sprite.texture.key &&
+            this.sprite.anims.currentFrame.isLast === false
+        )
     }
 
     isRunning(): boolean {

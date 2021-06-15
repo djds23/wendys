@@ -67,7 +67,7 @@ export default class PlayerState {
             } else if (R.contains(Input.Action.START, inputs.actions)) {
                 this.requestPause()
             }
-        } else {
+        } else if (this.character.isAttacking() === false) {
             this.swapToIdleAnimationIfNeeded()
         }
     }
