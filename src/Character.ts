@@ -3,9 +3,7 @@ import { CharacterAsset } from "./Assets";
 import * as R from 'ramda'
 
 class Character {
-    idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    run: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     asset: CharacterAsset
     constructor(
         characterAsset: CharacterAsset,
@@ -23,13 +21,11 @@ class Character {
             repeat: -1,
             duration: 2
         });
-        this.idle = scene.physics.add.sprite(startingX, 0, characterAsset.idle.key, 0)            
-        this.idle.setOrigin(0, 0)
-        this.idle.setScale(3)
-        this.idle.setCollideWorldBounds(true)
-        this.idle.setFlipX(flipX)
-
-        this.attack = scene.physics.add.sprite(startingX, 0, characterAsset.attack.key, 0)
+        this.sprite = scene.physics.add.sprite(startingX, 0, characterAsset.idle.key, 0)            
+        this.sprite.setOrigin(0, 0)
+        this.sprite.setScale(3)
+        this.sprite.setCollideWorldBounds(true)
+        this.sprite.setFlipX(flipX)
 
         // Animation set
         scene.anims.create({
@@ -39,13 +35,6 @@ class Character {
             repeat: -1,
             duration: 0.1
         });
-        this.run = scene.physics.add.sprite(startingX, 0, characterAsset.run.key, 0)
-        this.run.setOrigin(0, 0)
-        this.run.setScale(3)
-        this.run.setCollideWorldBounds(true)
-        this.run.disableBody()
-        this.run.setVisible(false)
-        this.run.setFlipX(flipX)
 
         // Animation set
         scene.anims.create({
@@ -54,30 +43,40 @@ class Character {
             frameRate: 9,
             duration: 0.1
         });
-        this.attack = scene.physics.add.sprite(startingX, 0, characterAsset.attack.key, 0)
-        this.attack.setOrigin(0, 0)
-        this.attack.setScale(3)
-        this.attack.setCollideWorldBounds(true)
-        this.attack.disableBody()
-        this.attack.setVisible(false)
-        this.attack.setFlipX(flipX)
     }
 
-    sprites(): Array<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody> {
-        return [
-            this.idle,
-            this.run,
-            this.attack
-        ]
+    idle() {
+        this.updateTexture(this.asset.idle.key, "idle")
+    }
+
+    run() {
+        this.updateTexture(this.asset.run.key, "run")
+    }
+
+    attack() {
+        this.updateTexture(this.asset.attack.key, "attack")
+    }
+
+    updateTexture(asset: string, animation: string) {
+        this.sprite.setTexture(asset)
+        this.sprite.play(animation)
+    }
+
+    isAttacking(): boolean {
+        return this.asset.attack.key === this.sprite.texture.key
+    }
+
+    isRunning(): boolean {
+        return this.asset.run.key === this.sprite.texture.key
+    }
+
+    isIdle(): boolean {
+        return this.asset.idle.key === this.sprite.texture.key
     }
 
     isInDamageAnimation(): boolean {
         return (
-            this.attack.visible &&
-            R.contains(
-                this.attack.anims.currentFrame.index, 
-                this.asset.attack.damageFrames
-            ) 
+            this.sprite.texture.key === this.asset.attack
         )
     }
 }

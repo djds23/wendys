@@ -8,7 +8,6 @@ import { Character } from '~/Character'
 
 export default class PlayerState {
     character: Character
-    currentSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     scene: Phaser.Scene
     isJumping = false
     constructor(
@@ -17,8 +16,7 @@ export default class PlayerState {
     ) {
         this.scene = scene
         this.character = character
-        this.currentSprite = character.idle
-        this.character.idle.play("idle")
+        this.character.idle()
     }
 
     // Call in create to finish configuring object
@@ -26,34 +24,24 @@ export default class PlayerState {
         ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody, 
         otherSprites: Array<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>
         ) {
-        this.character.attack.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.character.attack, ground, (_obj1, _obj2) => { 
-            this.character.attack.setVelocity(0, 0)
-        })
-        
-        this.character.idle.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.character.idle, ground, (_obj1, _obj2) => { 
-            this.character.idle.setVelocity(0, 0)
-        })
-
-        this.character.run.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.character.run, ground, (_obj1, _obj2) => { 
-            this.character.run.setVelocity(0, 0)
+        this.character.sprite.body.setAllowRotation(false)
+        this.scene.physics.add.collider(this.character.sprite, ground, (_obj1, _obj2) => { 
+            this.character.sprite.setVelocity(0, 0)
         })
     }
     /*
         Try call this every update
     */
     update(inputs: Input.InputUpdate | null) {
-        if (this.currentSprite.body.touching.down) {
+        if (this.character.sprite.body.touching.down) {
             this.isJumping = false
         }
 
-        if (inputs != null && this.isAttacking() == false) {
-            let xAdjustment = this.currentSprite.x
+        if (inputs != null && this.character.isAttacking() == false) {
+            let xAdjustment = this.character.sprite.x
             if (inputs.veritcal === VerticalMovement.JUMP && this.isJumping === false) {
                 this.isJumping = true
-                this.currentSprite.setVelocity(
+                this.character.sprite.setVelocity(
                     this.horizontalMovementToJumpVelocity(inputs.horizontal),
                     -1000
                 )
@@ -71,7 +59,7 @@ export default class PlayerState {
                         this.swapToIdleAnimationIfNeeded()
                         break;
                 }
-                this.currentSprite.setX(xAdjustment)
+                this.character.sprite.setX(xAdjustment)
             }
 
             if (R.contains(Input.Action.ATTACK, inputs.actions)) {
@@ -96,37 +84,19 @@ export default class PlayerState {
     }
 
     swapToRunAnimationIfNeeded() {
-        if (this.isRunning()) return;
-        this.currentSprite?.setVisible(false)        
-        this.character.run.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
-        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
-        this.currentSprite = this.character.run
-        this.currentSprite.play("run")
-        this.currentSprite.setVisible(true)
+        if (this.character.isRunning()) return;
+        this.character.run()
     }
     
 
     swapToIdleAnimationIfNeeded() {
-        if (this.isIdle()) return;
-        this.currentSprite?.setVisible(false)        
-        this.character.idle.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
-        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
-        this.currentSprite = this.character.idle
-        this.currentSprite.play("idle")
-        this.currentSprite.setVisible(true)
+        if (this.character.isIdle()) return;
+        this.character.idle()
     }
 
     performAttack() {
-        if (this.isAttacking()) return;
-        this.currentSprite?.setVisible(false)        
-        this.character.attack.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
-        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
-        this.currentSprite = this.character.attack
-        this.character.attack?.play('attack').on(Phaser.Animations.Events.ANIMATION_COMPLETE, (anim, frame, gameObject) => {
-            this.character.attack.disableBody(true, true)
-            this.currentSprite = this.character.idle
-            this.currentSprite?.setVisible(true)
-        });
+        if (this.character.isAttacking()) return;
+        this.character.attack()
     }
 
     requestPause() {
@@ -135,17 +105,5 @@ export default class PlayerState {
             manager.pause(FightScene.key)
             manager.start(PauseScene.key)
         }
-    }
-
-    isAttacking(): boolean {
-        return this.character.attack.visible
-    }
-
-    isRunning(): boolean {
-        return this.character.run.visible
-    }
-
-    isIdle(): boolean {
-        return this.character.idle.visible
     }
 }

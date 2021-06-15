@@ -45,8 +45,8 @@ export default class FightScene extends Phaser.Scene {
         current.state.input = new Input.KeyboardInputHandler()
         current.state.input.configure(this)
 
-        current.state.p1.configure(ground, current.state.p2.character.sprites())
-        current.state.p2.configure(ground, current.state.p1.character.sprites())
+        current.state.p1.configure(ground, [])
+        current.state.p2.configure(ground, [])
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
             current.state.gamepadEventHandler?.configure(this)
