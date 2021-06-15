@@ -21,7 +21,7 @@ class Character {
             repeat: -1,
             duration: 2
         });
-        this.sprite = scene.physics.add.sprite(startingX, 0, characterAsset.idle.key, 0)            
+        this.sprite = scene.physics.add.sprite(startingX, 0, characterAsset.idle.key, 0)
         this.sprite.setOrigin(0, 0)
         this.sprite.setScale(3)
         this.sprite.setCollideWorldBounds(true)
@@ -46,11 +46,17 @@ class Character {
     }
 
     idle() {
-        this.sprite.setTexture(this.asset.idle.key).play("idle")
+        this.sprite
+            .setSize(10, 30)
+            .setTexture(this.asset.idle.key)
+            .play("idle")
     }
 
     run() {
-        this.sprite.setTexture(this.asset.run.key, 2).play("run")
+        this.sprite
+            .setSize(10, 30)
+            .setTexture(this.asset.run.key)
+            .play("run")
     }
 
     attack() {
@@ -74,7 +80,7 @@ class Character {
 
     isInDamageAnimation(): boolean {
         return (
-            this.sprite.texture.key === this.asset.attack
+            this.sprite.texture.key === this.asset.attack.key
         )
     }
 }

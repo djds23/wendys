@@ -21,8 +21,7 @@ export default class PlayerState {
 
     // Call in create to finish configuring object
     configure(
-        ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody, 
-        otherSprites: Array<Phaser.Types.Physics.Arcade.SpriteWithDynamicBody>
+        ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody 
         ) {
         this.character.sprite.body.setAllowRotation(false)
         this.scene.physics.add.collider(this.character.sprite, ground, (_obj1, _obj2) => { 
@@ -48,11 +47,11 @@ export default class PlayerState {
             } else if (this.isJumping === false) {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
-                        xAdjustment -= 3
+                        xAdjustment -= 1.2
                         this.swapToRunAnimationIfNeeded()
                         break;
                     case HorizontalMovement.RIGHT:
-                        xAdjustment += 3
+                        xAdjustment += 1.2
                         this.swapToRunAnimationIfNeeded()
                         break;
                     case HorizontalMovement.STATIONARY:
@@ -99,6 +98,14 @@ export default class PlayerState {
         this.character.attack()
     }
 
+    attackGeometry(): Phaser.Geom.Rectangle | null {
+        if (this.character.isInDamageAnimation()) {
+            // gets the actual bounds of the sprite when attacking
+            return this.character.sprite.getBounds()
+        } else {
+            return null
+        }
+    }
     requestPause() {
         let manager = this.scene.game.scene
         if (manager.isPaused(FightScene.key) == false) {

@@ -45,8 +45,8 @@ export default class FightScene extends Phaser.Scene {
         current.state.input = new Input.KeyboardInputHandler()
         current.state.input.configure(this)
 
-        current.state.p1.configure(ground, [])
-        current.state.p2.configure(ground, [])
+        current.state.p1.configure(ground)
+        current.state.p2.configure(ground)
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
             current.state.gamepadEventHandler?.configure(this)
@@ -75,6 +75,9 @@ export default class FightScene extends Phaser.Scene {
         } else {
             current.state.p1?.update(null)
         }
+
+        console.log(current.state.p1?.attackGeometry())
+        
     }
 
     addInputText() {
