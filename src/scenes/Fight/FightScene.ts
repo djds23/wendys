@@ -3,8 +3,9 @@ import PlayerState from './PlayerState'
 import * as Input from '../../Inputs'
 import * as current from '../Current'
 import Environment from '../../Environment'
-import { BlueWitch, Stage } from '~/Assets'
+import { BlueWitch, RedWitch, Stage } from '~/Assets'
 import { Character } from '~/Character'
+import * as R from 'ramda'
 
 
 export default class FightScene extends Phaser.Scene {
@@ -42,6 +43,9 @@ export default class FightScene extends Phaser.Scene {
             this
         )
 
+        current.state.transition.manager = this.game.scene
+        current.state.transition.currentKey = this.scene.key
+
         current.state.input = new Input.KeyboardInputHandler()
         current.state.input.configure(this)
 
@@ -49,35 +53,33 @@ export default class FightScene extends Phaser.Scene {
         current.state.p2.configure(ground)
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
-            current.state.gamepadEventHandler?.configure(this)
-            current.state.keyboard?.configure(this)
+            current.state.input?.configure(this)
         })
 
         this.events.on(Phaser.Scenes.Events.PAUSE, () => {
-            current.state.gamepadEventHandler?.removeFromScene(this)
-            current.state.keyboard?.removeFromScene(this)
+            current.state.input?.removeFromScene(this)
         })
     }
 
     update(time, delta) {
         if (current.state.input != null) {
             let inputUpdate = current.state.input.update(time, delta)
+            if (inputUpdate != null) {
+                // console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
+                this.recentMovementInputs.unshift(inputUpdate)
+                this.updateInputText()
+
+                if (R.contains(Input.Action.START, inputUpdate.actions)) {
+                    current.state.transition.togglePause(time)
+                }
+            }
             current.state.p1?.update(        
                 inputUpdate
             )
             current.state.p1?.update(inputUpdate)
-
-            if (inputUpdate != null) {
-                // console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
-                this.recentMovementInputs.unshift()
-                this.updateInputText()
-            }
         } else {
             current.state.p1?.update(null)
-        }
-
-        console.log(current.state.p1?.attackGeometry())
-        
+        }        
     }
 
     addInputText() {

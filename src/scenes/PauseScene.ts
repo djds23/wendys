@@ -13,27 +13,20 @@ export default class PauseScene extends Phaser.Scene {
 
     create() {
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
-            // console.log(PauseScene.key + " RESUME Event")
-            current.state.gamepadEventHandler?.configure(this)
-            current.state.keyboard?.configure(this)
+            current.state.input?.configure(this)
         })
 
         this.events.on(Phaser.Scenes.Events.PAUSE, () => {
-            // console.log(PauseScene.key + " PAUSE Event")
-            current.state.gamepadEventHandler?.removeFromScene(this)
-            current.state.keyboard?.removeFromScene(this)
+            current.state.input?.removeFromScene(this)
         })
-
-        current.state.gamepadEventHandler?.configure(this)
-        current.state.keyboard?.configure(this)
+        current.state.input?.configure(this)
     }
 
     update(time, delta) {
         if (current.state.input != null) {
             let inputUpdate = current.state.input.update(time, delta)
             if (inputUpdate != null && R.contains(Input.Action.START, inputUpdate.actions)) {
-                this.game.scene.pause(PauseScene.key)
-                this.game.scene.resume(FightScene.key)
+                current.state.transition.togglePause(time)
             }
         }
     }

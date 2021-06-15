@@ -4,7 +4,8 @@ import * as Input from '../../Inputs'
 import FightScene from './FightScene'
 import PauseScene from '../PauseScene'
 import * as R from 'ramda'
-import { Character } from '~/Character'
+import * as current from '../Current'
+import { Character } from '../../Character'
 
 export default class PlayerState {
     character: Character
@@ -63,8 +64,6 @@ export default class PlayerState {
 
             if (R.contains(Input.Action.ATTACK, inputs.actions)) {
                 this.performAttack()
-            } else if (R.contains(Input.Action.START, inputs.actions)) {
-                this.requestPause()
             }
         } else if (this.character.isAttacking() === false) {
             this.swapToIdleAnimationIfNeeded()
@@ -104,13 +103,6 @@ export default class PlayerState {
             return this.character.sprite.getBounds()
         } else {
             return null
-        }
-    }
-    requestPause() {
-        let manager = this.scene.game.scene
-        if (manager.isPaused(FightScene.key) == false) {
-            manager.pause(FightScene.key)
-            manager.start(PauseScene.key)
         }
     }
 }
