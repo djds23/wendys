@@ -1,10 +1,7 @@
 import Phaser from 'phaser'
 import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
 import * as Input from '../../Inputs'
-import FightScene from './FightScene'
-import PauseScene from '../PauseScene'
 import * as R from 'ramda'
-import * as current from '../Current'
 import { Character } from '../../Character'
 
 export default class PlayerState {

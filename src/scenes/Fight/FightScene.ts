@@ -3,7 +3,7 @@ import PlayerState from './PlayerState'
 import * as Input from '../../Inputs'
 import * as current from '../Current'
 import Environment from '../../Environment'
-import { BlueWitch, RedWitch, Stage } from '~/Assets'
+import { BlueWitch, CharacterAsset, RedWitch, Stage } from '~/Assets'
 import { Character } from '~/Character'
 import * as R from 'ramda'
 
@@ -21,11 +21,15 @@ export default class FightScene extends Phaser.Scene {
         this.load.setBaseURL(Environment.baseURL)
 
         this.load.image(Stage.ground.key, Stage.ground.path)
-        this.load.spritesheet(this.blueWitch.attack.key, this.blueWitch.attack.path, this.blueWitch.attack.frameConfig)
-        this.load.spritesheet(this.blueWitch.run.key, this.blueWitch.run.path, this.blueWitch.run.frameConfig)
-        this.load.spritesheet(this.blueWitch.idle.key, this.blueWitch.idle.path, this.blueWitch.idle.frameConfig)
+        this.preloadSprites(current.state.match!.character1)
+        this.preloadSprites(current.state.match!.character2)
     }
 
+    preloadSprites(character: CharacterAsset) {
+        this.load.spritesheet(character.attack.key, character.attack.path, character.attack.frameConfig)
+        this.load.spritesheet(character.run.key, character.run.path, character.run.frameConfig)
+        this.load.spritesheet(character.idle.key, character.idle.path, character.idle.frameConfig)
+    }
     create() {
         this.inputTextLines = []
         this.recentMovementInputs = []
@@ -34,12 +38,12 @@ export default class FightScene extends Phaser.Scene {
         let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
 
         current.state.p1 = new PlayerState(
-            new Character(this.blueWitch, this, 0, false),
+            new Character(current.state.match!.character1, this, 0, false),
             this
         )
 
         current.state.p2 = new PlayerState(
-            new Character(this.blueWitch, this, 700, true),
+            new Character(current.state.match!.character2, this, 700, true),
             this
         )
 

@@ -1,10 +1,10 @@
 import Phaser from 'phaser'
 import { CharacterAsset } from "./Assets";
-import * as R from 'ramda'
 
 class Character {
     sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     asset: CharacterAsset
+
     constructor(
         characterAsset: CharacterAsset,
         scene: Phaser.Scene,
@@ -13,14 +13,6 @@ class Character {
         ) {
         this.asset = characterAsset
 
-        // Animation set
-        scene.anims.create({
-            key: "idle",
-            frames: scene.anims.generateFrameNumbers(characterAsset.idle.key, { frames: [0, 1, 2, 3, 4, 5] }),
-            frameRate: 8,
-            repeat: -1,
-            duration: 2
-        });
         this.sprite = scene.physics.add.sprite(startingX, 0, characterAsset.idle.key, 0)
         this.sprite.setOrigin(0, 0)
         this.sprite.setScale(3)
@@ -28,7 +20,16 @@ class Character {
         this.sprite.setFlipX(flipX)
 
         // Animation set
-        scene.anims.create({
+        this.sprite.anims.create({
+            key: "idle",
+            frames: scene.anims.generateFrameNumbers(characterAsset.idle.key, { frames: [0, 1, 2, 3, 4, 5] }),
+            frameRate: 8,
+            repeat: -1,
+            duration: 2
+        })
+
+        // Animation set
+        this.sprite.anims.create({
             key: "run",
             frames: scene.anims.generateFrameNumbers(characterAsset.run.key, { frames: [0, 1, 2, 3, 4, 5, 6, 7] }),
             frameRate: 9,
@@ -37,7 +38,7 @@ class Character {
         });
 
         // Animation set
-        scene.anims.create({
+        this.sprite.anims.create({
             key: "attack",
             frames: scene.anims.generateFrameNumbers(characterAsset.attack.key, { frames: [0, 1, 2, 3, 4, 5, 6, 7, 8] }),
             frameRate: 9,

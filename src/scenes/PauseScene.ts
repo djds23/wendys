@@ -2,7 +2,6 @@ import Phaser from 'phaser'
 import * as R from 'ramda'
 import * as Input from '../Inputs'
 import * as current from './Current'
-import FightScene from './Fight/FightScene'
 
 export default class PauseScene extends Phaser.Scene {
     static key = "PauseScene"
