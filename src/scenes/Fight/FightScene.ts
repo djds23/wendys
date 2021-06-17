@@ -3,48 +3,16 @@ import PlayerState from './PlayerState'
 import * as Input from '../../Inputs'
 import * as current from '../Current'
 import Environment from '../../Environment'
-
-
-interface Asset {
-    key: string
-    path: string
-    frameConfig: Phaser.Types.Loader.FileTypes.ImageFrameConfig | undefined
-}
-
-class BlueWitch {
-    static attack: Asset = {
-        key: "assets/images/Blue_witch/B_witch_attack.png",
-        path: "assets/images/Blue_witch/B_witch_attack.png",
-        frameConfig: {
-            frameWidth: 104,
-            frameHeight: 46
-        }
-    }
-
-    static idle: Asset = {
-        key: "assets/images/Blue_witch/B_witch_idle.png",
-        path: "assets/images/Blue_witch/B_witch_idle.png",
-        frameConfig: {
-            frameWidth: 32,
-            frameHeight: 48
-
-        }
-    }
-}
-
-class Stage {
-    static ground: Asset = {
-        key: "assets/images/ground.png",
-        path: "assets/images/ground.png",
-        frameConfig: undefined
-    }
-}
+import { BlueWitch, CharacterAsset, RedWitch, Stage } from '~/Assets'
+import { Character } from '~/Character'
+import * as R from 'ramda'
 
 
 export default class FightScene extends Phaser.Scene {
     static key: string = 'FightScene'
     inputTextLines = new Array<Phaser.GameObjects.Text>()
     recentMovementInputs = new Array<Input.InputUpdate>()
+    blueWitch = new BlueWitch()
     constructor() {
         super(FightScene.key)
     }
@@ -53,77 +21,69 @@ export default class FightScene extends Phaser.Scene {
         this.load.setBaseURL(Environment.baseURL)
 
         this.load.image(Stage.ground.key, Stage.ground.path)
-        this.load.spritesheet(BlueWitch.attack.key, BlueWitch.attack.path, BlueWitch.attack.frameConfig)
-        this.load.spritesheet(BlueWitch.idle.key, BlueWitch.idle.path, BlueWitch.idle.frameConfig)
+        this.preloadSprites(current.state.match!.character1)
+        this.preloadSprites(current.state.match!.character2)
     }
 
+    preloadSprites(character: CharacterAsset) {
+        this.load.spritesheet(character.attack.key, character.attack.path, character.attack.frameConfig)
+        this.load.spritesheet(character.run.key, character.run.path, character.run.frameConfig)
+        this.load.spritesheet(character.idle.key, character.idle.path, character.idle.frameConfig)
+    }
     create() {
         this.inputTextLines = []
         this.recentMovementInputs = []
 
         this.addInputText()
         let ground = this.physics.add.staticImage(400, 576, Stage.ground.key)
-        // Animation set
-        this.anims.create({
-            key: "idle",
-            frames: this.anims.generateFrameNumbers(BlueWitch.idle.key, { frames: [0, 1, 2, 3, 4, 5] }),
-            frameRate: 8,
-            repeat: -1,
-            duration: 2
-        });
 
-        // Animation set
-        this.anims.create({
-            key: "attack",
-            frames: this.anims.generateFrameNumbers(BlueWitch.attack.key, { frames: [0, 1, 2, 3, 4, 5, 6, 7, 8] }),
-            frameRate: 9,
-            duration: 0.1
-        });
-
-        let idle = this.physics.add.sprite(0, 0, BlueWitch.idle.key, 0)
-        let attack = this.physics.add.sprite(0, 0, BlueWitch.attack.key, 0)
         current.state.p1 = new PlayerState(
-            idle,
-            attack,
+            new Character(current.state.match!.character1, this, 0, false),
             this
         )
 
-        current.state.gamepadEventHandler = new Input.GamepadInputHandler()
-        current.state.gamepadEventHandler?.configure(this)
+        current.state.p2 = new PlayerState(
+            new Character(current.state.match!.character2, this, 700, true),
+            this
+        )
 
-        current.state.keyboard = new Input.KeyboardInputHandler()
-        current.state.keyboard.configure(this)
+        current.state.transition.manager = this.game.scene
+        current.state.transition.currentKey = this.scene.key
+
+        current.state.input = new Input.KeyboardInputHandler()
+        current.state.input.configure(this)
+
         current.state.p1.configure(ground)
-        this.registerInputCallbacks()
+        current.state.p2.configure(ground)
 
         this.events.on(Phaser.Scenes.Events.RESUME, () => {
-            current.state.gamepadEventHandler?.configure(this)
-            current.state.keyboard?.configure(this)
-            this.registerInputCallbacks()
+            current.state.input?.configure(this)
         })
 
         this.events.on(Phaser.Scenes.Events.PAUSE, () => {
-            current.state.gamepadEventHandler?.removeFromScene(this)
-            current.state.keyboard?.removeFromScene(this)
+            current.state.input?.removeFromScene(this)
         })
     }
 
-    registerInputCallbacks() {
-        current.state.keyboard?.register((input, time) => this.handleInput(input, time))
-        current.state.gamepadEventHandler?.register((input, time) => this.handleInput(input, time))
-    }
-
-    handleInput(inputUpdate: Input.InputUpdate, time: number) {
-        console.log(FightScene.key + ";" + time + ";" + JSON.stringify(inputUpdate))
-        current.state.p1?.update(inputUpdate)
-        this.recentMovementInputs.unshift(inputUpdate)
-        this.updateInputText()
-    }
-
     update(time, delta) {
-        current.state.gamepadEventHandler?.update(time, delta)
-        current.state.keyboard?.update(time, delta)
-        // this.current.dummy?.update(time, delta)
+        if (current.state.input != null) {
+            let inputUpdate = current.state.input.update(time, delta)
+            if (inputUpdate != null) {
+                // console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
+                this.recentMovementInputs.unshift(inputUpdate)
+                this.updateInputText()
+
+                if (R.contains(Input.Action.START, inputUpdate.actions)) {
+                    current.state.transition.togglePause(time)
+                }
+            }
+            current.state.p1?.update(        
+                inputUpdate
+            )
+            current.state.p1?.update(inputUpdate)
+        } else {
+            current.state.p1?.update(null)
+        }        
     }
 
     addInputText() {

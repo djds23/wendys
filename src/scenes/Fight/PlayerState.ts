@@ -1,85 +1,69 @@
-import { Vertices } from 'matter'
-import Phaser, { Physics } from 'phaser'
+import Phaser from 'phaser'
 import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
-import TimeUpdate from './Time'
 import * as Input from '../../Inputs'
-import FightScene from './FightScene'
-import PauseScene from '../PauseScene'
+import * as R from 'ramda'
+import { Character } from '../../Character'
 
 export default class PlayerState {
-    idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    currentSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    character: Character
     scene: Phaser.Scene
     isJumping = false
     constructor(
-        idle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
-        attack: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+        character: Character,
         scene: Phaser.Scene
     ) {
         this.scene = scene
-        this.idle = idle
-        this.attack = attack
-        this.currentSprite = idle
-
-        attack.setOrigin(0, 0)
-        attack.setScale(3)
-        attack.setCollideWorldBounds(true)
-        attack.disableBody()
-    
-        idle.setOrigin(0, 0)
-        idle.setScale(3)
-        idle.setCollideWorldBounds(true)
-
-        attack.setVisible(false)
-        idle.play("idle")
+        this.character = character
+        this.character.idle()
     }
 
     // Call in create to finish configuring object
-    configure(ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
-        this.attack.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.attack, ground, (_obj1, _obj2) => { 
-            this.isJumping = false
-            this.attack.setVelocity(0, 0)
-        })
-        
-        this.idle.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.idle, ground, (_obj1, _obj2) => { 
-            this.isJumping = false
-            this.idle.setVelocity(0, 0)
+    configure(
+        ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody 
+        ) {
+        this.character.sprite.body.setAllowRotation(false)
+        this.scene.physics.add.collider(this.character.sprite, ground, (_obj1, _obj2) => { 
+            this.character.sprite.setVelocity(0, 0)
         })
     }
     /*
         Try call this every update
     */
     update(inputs: Input.InputUpdate | null) {
-        if (inputs != null && this.isAttacking() == false) {
-            let xAdjustment = this.currentSprite.x
+        if (this.character.sprite.body.touching.down) {
+            this.isJumping = false
+        }
+
+        if (inputs != null && this.character.isAttacking() == false) {
+            let xAdjustment = this.character.sprite.x
             if (inputs.veritcal === VerticalMovement.JUMP && this.isJumping === false) {
                 this.isJumping = true
-                this.currentSprite.setVelocity(
+                this.character.sprite.setVelocity(
                     this.horizontalMovementToJumpVelocity(inputs.horizontal),
                     -1000
                 )
             } else if (this.isJumping === false) {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
-                        xAdjustment -= 3
+                        xAdjustment -= 1.2
+                        this.swapToRunAnimationIfNeeded()
                         break;
                     case HorizontalMovement.RIGHT:
-                        xAdjustment += 3
+                        xAdjustment += 1.2
+                        this.swapToRunAnimationIfNeeded()
                         break;
                     case HorizontalMovement.STATIONARY:
+                        this.swapToIdleAnimationIfNeeded()
                         break;
                 }
-                this.currentSprite.setX(xAdjustment)
+                this.character.sprite.setX(xAdjustment)
             }
 
-            if (inputs.action === Input.Action.ATTACK) {
+            if (R.contains(Input.Action.ATTACK, inputs.actions)) {
                 this.performAttack()
-            } else if (inputs.action === Input.Action.START) {
-                this.requestPause()
             }
+        } else if (this.character.isAttacking() === false) {
+            this.swapToIdleAnimationIfNeeded()
         }
     }
 
@@ -94,28 +78,28 @@ export default class PlayerState {
         }
     }
 
+    swapToRunAnimationIfNeeded() {
+        if (this.character.isRunning()) return;
+        this.character.run()
+    }
+    
+
+    swapToIdleAnimationIfNeeded() {
+        if (this.character.isIdle()) return;
+        this.character.idle()
+    }
+
     performAttack() {
-        if (this.isAttacking()) return;
-        this.currentSprite?.setVisible(false)        
-        this.attack.enableBody(true, this.currentSprite.x, this.currentSprite.y, true, true);
-        this.currentSprite?.body.reset(this.currentSprite.x, this.currentSprite.y)
-        this.currentSprite = this.attack
-        this.attack?.play('attack').on(Phaser.Animations.Events.ANIMATION_COMPLETE, (anim, frame, gameObject) => {
-            this.attack.disableBody(true, true)
-            this.currentSprite = this.idle
-            this.currentSprite?.setVisible(true)
-        });
+        if (this.character.isAttacking()) return;
+        this.character.attack()
     }
 
-    requestPause() {
-        let manager = this.scene.game.scene
-        if (manager.isPaused(FightScene.key) == false) {
-            manager.pause(FightScene.key)
-            manager.start(PauseScene.key)
+    attackGeometry(): Phaser.Geom.Rectangle | null {
+        if (this.character.isInDamageAnimation()) {
+            // gets the actual bounds of the sprite when attacking
+            return this.character.sprite.getBounds()
+        } else {
+            return null
         }
-    }
-
-    isAttacking(): boolean {
-        return this.attack.visible
     }
 }
