@@ -101,7 +101,6 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     updateWandPosition() {
         let offset = this.offsetForIndex[this.currentIndex]
-        console.log("offset" + offset)
         this.wand?.setX(offset)
     }
 
@@ -132,7 +131,6 @@ export default class CharacterSelectScene extends Phaser.Scene {
                 this.playerOne,
                 this.playerTwo
             )
-            console.log(current.state.match)
             this.scene.manager?.pause(CharacterSelectScene.key)
             this.scene.manager?.start(FightScene.key)
         }
@@ -142,12 +140,12 @@ export default class CharacterSelectScene extends Phaser.Scene {
 type InputUpdateWithTime = [Input.InputUpdate, number]
 
 class InputReducer {
-
     isNewInput() {
         return this.inputs.length === 1
     }
 
     inputs: Array<InputUpdateWithTime> = []
+
     add(input: Input.InputUpdate | null, time: number) {
         if (input == null) {
             this.inputs = []
@@ -165,6 +163,4 @@ class InputReducer {
             }
         }
     }
-
-
 }

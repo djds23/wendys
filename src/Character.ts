@@ -1,23 +1,30 @@
 import Phaser from 'phaser'
-import { CharacterAsset } from "./Assets";
+import { uniq } from 'ramda';
+import { CharacterAsset, CharacterSelect } from "./Assets";
+import * as Changes  from './scenes/Fight/Updates'
 
 class Character {
-    sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    sprite: Phaser.GameObjects.Sprite
     asset: CharacterAsset
+
+    identifier(): string {
+        return this.sprite.data.values.id
+    }
 
     constructor(
         characterAsset: CharacterAsset,
         scene: Phaser.Scene,
         startingX: number,
-        flipX: boolean
+        flipX: boolean,
+        identifier: string
         ) {
         this.asset = characterAsset
 
-        this.sprite = scene.physics.add.sprite(startingX, 0, characterAsset.idle.key, 0)
-        this.sprite.setOrigin(0, 0)
+        this.sprite = scene.add.sprite(startingX, 100, characterAsset.idle.key, 0)
         this.sprite.setScale(3)
-        this.sprite.setCollideWorldBounds(true)
         this.sprite.setFlipX(flipX)
+        this.sprite.setDataEnabled()
+        this.sprite.setData({ id: identifier })
 
         // Animation set
         this.sprite.anims.create({
@@ -46,22 +53,28 @@ class Character {
         });
     }
 
-    idle() {
-        this.sprite
-            .setSize(10, 30)
-            .setTexture(this.asset.idle.key)
-            .play("idle")
+    idle(): Changes.TextureChanges {
+        return new Changes.TextureChanges(
+            this.asset.idle.key, 
+            "idle",
+            0
+        )
     }
 
-    run() {
-        this.sprite
-            .setSize(10, 30)
-            .setTexture(this.asset.run.key)
-            .play("run")
+    run(): Changes.TextureChanges {
+        return new Changes.TextureChanges(
+            this.asset.run.key, 
+            "run",
+            0
+        )
     }
 
-    attack() {
-        this.sprite.setTexture(this.asset.attack.key).play("attack")
+    attack(): Changes.TextureChanges {
+        return new Changes.TextureChanges(
+            this.asset.attack.key, 
+            "attack",
+            0
+        )
     }
 
     isAttacking(): boolean {

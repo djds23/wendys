@@ -3,8 +3,10 @@ import { HorizontalMovement, VerticalMovement } from '../Movement/Movement'
 import * as Input from '../../Inputs'
 import * as R from 'ramda'
 import { Character } from '../../Character'
+import * as Changes  from './Updates'
 
-export default class PlayerState {
+
+class PlayerState {
     character: Character
     scene: Phaser.Scene
     isJumping = false
@@ -17,54 +19,47 @@ export default class PlayerState {
         this.character.idle()
     }
 
-    // Call in create to finish configuring object
-    configure(
-        ground: Phaser.Types.Physics.Arcade.ImageWithStaticBody 
-        ) {
-        this.character.sprite.body.setAllowRotation(false)
-        this.scene.physics.add.collider(this.character.sprite, ground, (_obj1, _obj2) => { 
-            this.character.sprite.setVelocity(0, 0)
-        })
+    identifier(): string {
+        return this.character.identifier()
     }
-    /*
-        Try call this every update
-    */
-    update(inputs: Input.InputUpdate | null) {
-        if (this.character.sprite.body.touching.down) {
-            this.isJumping = false
+
+
+    // call this every update
+    update(inputs: Input.InputUpdate | null, time: number, delta: number): Changes.CharacterUpdate {
+        if (this.character.sprite.x > 570) {
+            // this.isJumping = false
         }
 
+        let output = new Changes.CharacterUpdate(this.character.identifier(), time, null)
+        output.changes = Changes.SpriteChanges.ChangesFromSprite(this.character)
+        output.changes.texture = this.character.idle()
+
         if (inputs != null && this.character.isAttacking() == false) {
-            let xAdjustment = this.character.sprite.x
             if (inputs.veritcal === VerticalMovement.JUMP && this.isJumping === false) {
-                this.isJumping = true
-                this.character.sprite.setVelocity(
-                    this.horizontalMovementToJumpVelocity(inputs.horizontal),
-                    -1000
-                )
+                // this.isJumping = true
+                return output
             } else if (this.isJumping === false) {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
-                        xAdjustment -= 1.2
-                        this.swapToRunAnimationIfNeeded()
+                        output.changes.position.x -= 1.2
+                        output.changes.texture = this.character.run()
                         break;
                     case HorizontalMovement.RIGHT:
-                        xAdjustment += 1.2
-                        this.swapToRunAnimationIfNeeded()
+                        output.changes.position.x += 1.2
+                        output.changes.texture = this.character.run()
                         break;
                     case HorizontalMovement.STATIONARY:
-                        this.swapToIdleAnimationIfNeeded()
                         break;
                 }
-                this.character.sprite.setX(xAdjustment)
+                return output
             }
 
             if (R.contains(Input.Action.ATTACK, inputs.actions)) {
-                this.performAttack()
+                output.changes.texture = this.character.attack()
+                return output
             }
-        } else if (this.character.isAttacking() === false) {
-            this.swapToIdleAnimationIfNeeded()
-        }
+        } 
+        return output
     }
 
     horizontalMovementToJumpVelocity(movement: HorizontalMovement): number {
@@ -78,22 +73,6 @@ export default class PlayerState {
         }
     }
 
-    swapToRunAnimationIfNeeded() {
-        if (this.character.isRunning()) return;
-        this.character.run()
-    }
-    
-
-    swapToIdleAnimationIfNeeded() {
-        if (this.character.isIdle()) return;
-        this.character.idle()
-    }
-
-    performAttack() {
-        if (this.character.isAttacking()) return;
-        this.character.attack()
-    }
-
     attackGeometry(): Phaser.Geom.Rectangle | null {
         if (this.character.isInDamageAnimation()) {
             // gets the actual bounds of the sprite when attacking
@@ -102,4 +81,8 @@ export default class PlayerState {
             return null
         }
     }
+}
+
+export {
+    PlayerState
 }

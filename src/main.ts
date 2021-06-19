@@ -8,13 +8,6 @@ const config: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
 	width: 800,
 	height: 600,
-	physics: {
-		default: 'arcade',
-		arcade: {
-			gravity: { y: 2000 },
-			debug: true
-		}
-	},
 	input: { gamepad: true, keyboard: true },
 	backgroundColor: "#800080",
 	scene: [CharacterSelectScene, FightScene, PauseScene]

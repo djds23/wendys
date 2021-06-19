@@ -1,9 +1,10 @@
 import Phaser from 'phaser'
-import PlayerState from './Fight/PlayerState'
+import * as PlayerState from './Fight/PlayerState'
 import * as Input from '../Inputs'
 import FightScene from './Fight/FightScene'
 import PauseScene from './PauseScene'
 import Match from './Match'
+import { Character } from '~/Character'
 
 class TransitionManager {
     manager: Phaser.Scenes.SceneManager | null = null
@@ -28,11 +29,18 @@ class TransitionManager {
 
 class Current {
     match: Match | null = null
-    p1: PlayerState | null = null
-    p2: PlayerState | null = null
+    p1: PlayerState.PlayerState | null = null
+    p2: PlayerState.PlayerState | null = null
     input: Input.InputHandler | null = null
     transition = new TransitionManager()
     dummy: Input.DummyInputHandler | null = null
+
+    characters(): Map<string, Character> {
+        let map = new Map()
+        map.set(this.p1!.character.identifier(), this.p1!.character)
+        map.set(this.p2!.character.identifier(), this.p2!.character)
+        return map
+    }
 }
 
 const state = new Current()
