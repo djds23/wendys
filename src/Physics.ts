@@ -41,8 +41,16 @@ class PhysicsUpdate {
 type BodyCreatedCallback = (body: planck.Body) => void
 
 class Physics {
+
     // Box2D works with meters. We need to convert meters to pixels.
     // let's say 30 pixels = 1 meter.
+    //
+    // From the docs on units https://github.com/shakiba/planck.js/wiki/Overview#units
+    //
+    // > Planck.js works with floating point numbers and tolerances have to be used to make Planck.js perform well. These tolerances have been tuned to work well with meters-kilogram-second (MKS) units. In particular, Planck.js has been tuned to work well with moving shapes between 0.1 and 10 meters. So this means objects between soup cans and buses in size should work well. Static shapes may be up to 50 meters long without trouble.
+    // > Being a 2D physics engine, it is tempting to use pixels as your units. Unfortunately this will lead to a poor simulation and possibly weird behavior. An object of length 200 pixels would be seen by Planck.js as the size of a 45 story building.
+    // > Caution: Planck.js is tuned for MKS units. Keep the size of moving objects roughly between 0.1 and 10 meters. You'll need to use some scaling system when you render your environment and actors. The Planck.js testbed does this by using stage.js viewbox transform. DO NOT USE PIXELS.
+    //
     worldScale = 30;
     world: planck.World
 
@@ -55,6 +63,7 @@ class Physics {
         return this.worldScale * 0.001
     }
 
+    // converts vectors from pixel space to meters for moving bodies
     pixelsToMeter(vec: planck.Vec2): planck.Vec2 {
         return vec.mul(this.gameScale)
     }
