@@ -121,6 +121,7 @@ export default class FightScene extends Phaser.Scene {
             beforeChangeCache.set(character.identifier, beforeChange)
             let changesApplied = this.applyChangesToCharacter(character, update, beforeChange)
             if (changesApplied) {
+                console.log(character.identifier + " inputUpdated" + changesApplied)
                 this.updatePhysicsBodyToSprite(character.sprite)
                 characters.delete(update.identifier)
             }
@@ -137,6 +138,7 @@ export default class FightScene extends Phaser.Scene {
             let mergedUpdate = Changes.CharacterUpdate.MergeChangesFromPhysics(update, character)
             let changesApplied = this.applyChangesToCharacter(character, mergedUpdate, beforeChange)
             if (changesApplied) {
+                console.log(character.identifier + " physicsUpdated" + character.sprite.data.values.body.getPosition())
                 characters.delete(update.identifier)
             }
         })
@@ -151,7 +153,6 @@ export default class FightScene extends Phaser.Scene {
         }
         let sprite = character.sprite
         let inputHasChangedForCharacter = before.equals(update.changes)
-        console.log(character.identifier + " " + inputHasChangedForCharacter)
         if (inputHasChangedForCharacter == false || character.sprite.anims.currentAnim == null) {
             sprite.setPosition(update.changes?.position.x, update.changes?.position.y)
             sprite.setRotation(update.changes?.angle)
@@ -166,7 +167,6 @@ export default class FightScene extends Phaser.Scene {
             
             return true
         } else {
-            console.log(character.identifier + "didNotApplyUpdates")
             return false
         }
     }
@@ -175,6 +175,7 @@ export default class FightScene extends Phaser.Scene {
         let vec = new planck.Vec2()
         vec.set(sprite.x, sprite.y)
         let body = sprite?.data.values.body as planck.Body
+        console.log("updatePhysicsBodyToSprite x: " + sprite.x + " y: " + sprite.y + " physics " + vec)
         body.setPosition(vec)
     }
 
