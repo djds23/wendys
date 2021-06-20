@@ -136,11 +136,10 @@ export default class FightScene extends Phaser.Scene {
             }
             let mergedUpdate = Changes.CharacterUpdate.MergeChangesFromPhysics(update, character)
             let changesApplied = this.applyChangesToCharacter(character, mergedUpdate, beforeChange)
-            // console.log(character.identifier() + " " + beforeChange.equals(mergedUpdate.changes))
             if (changesApplied) {
                 characters.delete(update.identifier)
             }
-        })    
+        })
     }
 
     // Apply updates to a character if any exist
@@ -151,7 +150,9 @@ export default class FightScene extends Phaser.Scene {
             return false
         }
         let sprite = character.sprite
-        if (before.equals(update.changes) == false || character.sprite.anims.currentAnim == null) {
+        let inputHasChangedForCharacter = before.equals(update.changes)
+        console.log(character.identifier + " " + inputHasChangedForCharacter)
+        if (inputHasChangedForCharacter == false || character.sprite.anims.currentAnim == null) {
             sprite.setPosition(update.changes?.position.x, update.changes?.position.y)
             sprite.setRotation(update.changes?.angle)
 

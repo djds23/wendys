@@ -6,7 +6,9 @@ import * as Physics from '../../Physics'
 class TextureChanges {
     textureKey: string
     animationKey: string
-    animationFrame: number
+    // At some point, if we want to really implement rollback we need animation frame driven by these
+    // diffs. Until then we are not really using this for anything
+    animationFrame: number 
     constructor(
         textureKey: string,
         animationKey: string,
@@ -20,8 +22,8 @@ class TextureChanges {
     equals(other: TextureChanges): boolean {
         return (
             this.textureKey == other.textureKey &&
-            this.animationKey == other.animationKey &&
-            this.animationFrame == other.animationFrame
+            this.animationKey == other.animationKey //&&
+            // this.animationFrame == other.animationFrame
         )
     }
 }
@@ -31,12 +33,12 @@ class TextureChanges {
 class SpriteChanges {
     position: Phaser.Math.Vector2
     angle: number
-    texture: TextureChanges | null
+    texture: TextureChanges
 
     constructor(
         position: Phaser.Math.Vector2,
         angle: number,
-        texture: TextureChanges | null
+        texture: TextureChanges
     ) {
         this.position = position
         this.angle = angle
@@ -44,32 +46,23 @@ class SpriteChanges {
     }
 
     equals(other: SpriteChanges): boolean {
-        let areTexturesEqual = false
-        if (other.texture != null && this.texture != null) {
-            areTexturesEqual = this.texture.equals(other.texture)
-        } else if (other.texture == null && this.texture == null) {
-            areTexturesEqual = true
-        }
         return (
-            areTexturesEqual &&
+            this.texture.equals(other.texture) &&
             this.position.equals(other.position) &&
             this.angle === other.angle
         )
-
     }
 
     static ChangesFromSprite(character: Character): SpriteChanges {
         let sprite = character.sprite
         let position = new Phaser.Math.Vector2(sprite.x, sprite.y)
-        let texture: TextureChanges | null = null
+        let texture: TextureChanges = character.idle()
         if (sprite.anims.currentAnim != null) {
             texture = new TextureChanges(
                 sprite.texture.key,
                 sprite.anims.currentAnim.key,
                 sprite.anims.currentFrame.index
             )            
-        } else {
-            texture = character.idle()         
         }
         return new SpriteChanges(
             position,
