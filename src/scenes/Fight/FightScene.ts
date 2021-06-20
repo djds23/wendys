@@ -138,7 +138,6 @@ export default class FightScene extends Phaser.Scene {
             let mergedUpdate = Changes.CharacterUpdate.MergeChangesFromPhysics(update, character)
             let changesApplied = this.applyChangesToCharacter(character, mergedUpdate, beforeChange)
             if (changesApplied) {
-                console.log(character.identifier + " physicsUpdated" + character.sprite.data.values.body.getPosition())
                 characters.delete(update.identifier)
             }
         })
@@ -164,7 +163,6 @@ export default class FightScene extends Phaser.Scene {
             if (update.changes?.texture?.animationKey != null && sprite.anims.currentAnim?.key !== update.changes?.texture.animationKey) {
                 sprite.play(update.changes.texture.animationKey)
             }
-            
             return true
         } else {
             return false
@@ -173,10 +171,9 @@ export default class FightScene extends Phaser.Scene {
 
     updatePhysicsBodyToSprite(sprite: Phaser.GameObjects.Sprite) {
         let vec = new planck.Vec2()
-        vec.set(sprite.x, sprite.y)
+        let destination = this.simulation.pixelsToMeter(vec.set(sprite.x, sprite.y))
         let body = sprite?.data.values.body as planck.Body
-        console.log("updatePhysicsBodyToSprite x: " + sprite.x + " y: " + sprite.y + " physics " + vec)
-        body.setPosition(vec)
+        body.setPosition(destination)
     }
 
     addInputText() {

@@ -43,11 +43,20 @@ type BodyCreatedCallback = (body: planck.Body) => void
 class Physics {
     // Box2D works with meters. We need to convert meters to pixels.
     // let's say 30 pixels = 1 meter.
-    worldScale = 1;
+    worldScale = 30;
     world: planck.World
+
     constructor() {
         let gravity = planck.Vec2(0, 3);
         this.world = planck.World(gravity)
+    }
+
+    get gameScale(): number {
+        return this.worldScale * 0.001
+    }
+
+    pixelsToMeter(vec: planck.Vec2): planck.Vec2 {
+        return vec.mul(this.gameScale)
     }
 
     // here we go with some Box2D stuff
@@ -59,7 +68,6 @@ class Physics {
         // this is how we create a generic Box2D body
         let box = this.world.createBody();
         if(isDynamic){
- 
             // Box2D bodies born as static bodies, but we can make them dynamic
             box.setDynamic();
         }
@@ -87,14 +95,13 @@ class Physics {
         }
     }
 
-    update(time, delta): Array<PhysicsUpdate> {
-
+    update(time, delta): Map<string, PhysicsUpdate> {
         // advance the simulation by 1/20 seconds
         this.world.step(delta);
 
         // crearForces  method should be added at the end on each step
         this.world.clearForces();
-        let output: Array<PhysicsUpdate> = []
+        let output: Map<string, PhysicsUpdate> = new Map()
         // iterate through all bodies
         for (let b = this.world.getBodyList(); b; b = b.getNext()){
 
@@ -113,7 +120,7 @@ class Physics {
                 userData,
                 b
             )
-            output.push(update)
+            output.set(userData, update)
         }
         return output
     }
