@@ -39,11 +39,11 @@ class PlayerState {
             } else if (this.isJumping === false) {
                 switch (inputs.horizontal) {
                     case HorizontalMovement.LEFT:
-                        output.changes.position.x -= 1.2
+                        output.changes.position.x -= 2
                         output.changes.texture = this.character.run()
                         break;
                     case HorizontalMovement.RIGHT:
-                        output.changes.position.x += 1.2
+                        output.changes.position.x += 2
                         output.changes.texture = this.character.run()
                         break;
                     case HorizontalMovement.STATIONARY:

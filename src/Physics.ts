@@ -51,6 +51,8 @@ class Physics {
     // > Being a 2D physics engine, it is tempting to use pixels as your units. Unfortunately this will lead to a poor simulation and possibly weird behavior. An object of length 200 pixels would be seen by Planck.js as the size of a 45 story building.
     // > Caution: Planck.js is tuned for MKS units. Keep the size of moving objects roughly between 0.1 and 10 meters. You'll need to use some scaling system when you render your environment and actors. The Planck.js testbed does this by using stage.js viewbox transform. DO NOT USE PIXELS.
     //
+    // > Due to the limitations of floating point arithmetic, using Planck.js to model the movement of glaciers or dust particles is not a good idea.
+    //
     worldScale = 30;
     world: planck.World
 
@@ -76,6 +78,7 @@ class Physics {
  
         // this is how we create a generic Box2D body
         let box = this.world.createBody();
+        box.setFixedRotation(true)
         if(isDynamic){
             // Box2D bodies born as static bodies, but we can make them dynamic
             box.setDynamic();
@@ -83,8 +86,15 @@ class Physics {
  
         let boxShape = planck.Box(width / 2 / this.worldScale, height / 2 / this.worldScale) as planck.Shape
         // a body can have one or more fixtures. This is how we create a box fixture inside a body
-        box.createFixture(boxShape, undefined);
- 
+
+        box.createFixture(
+            {
+                shape: boxShape,
+                density: 1.0,
+                friction: 0,
+            }
+        )
+
         // now we place the body in the world
         box.setPosition(planck.Vec2(posX / this.worldScale, posY / this.worldScale));
  
