@@ -7,7 +7,7 @@ class Character {
     sprite: Phaser.GameObjects.Sprite
     asset: CharacterAsset
 
-    identifier(): string {
+    get identifier(): string {
         return this.sprite.data.values.id
     }
 

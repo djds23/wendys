@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
+import { update } from 'ramda'
 import { Character } from '../../Character'
+import * as Physics from '../../Physics'
 
 class TextureChanges {
     textureKey: string
@@ -43,14 +45,15 @@ class SpriteChanges {
 
     equals(other: SpriteChanges): boolean {
         let areTexturesEqual = false
-        if (other.texture != null) {
-            areTexturesEqual = (this.texture?.equals(other.texture) || false)
+        if (other.texture != null && this.texture != null) {
+            areTexturesEqual = this.texture.equals(other.texture)
+        } else if (other.texture == null && this.texture == null) {
+            areTexturesEqual = true
         }
         return (
             areTexturesEqual &&
             this.position.equals(other.position) &&
             this.angle === other.angle
-            
         )
 
     }
@@ -79,23 +82,27 @@ class SpriteChanges {
 class CharacterUpdate {
     identifier: string
     time: number
-    changes: SpriteChanges | null = null
-    constructor(identifier: string, time: number, changes: SpriteChanges |  null) {
+    changes: SpriteChanges
+    constructor(identifier: string, time: number, changes: SpriteChanges) {
         this.identifier = identifier
         this.time = time
         this.changes = changes
     }
 
     equals(other: CharacterUpdate): boolean {
-        let areChangesEqual = false
-        if (other.changes != null) {
-            areChangesEqual = (this.changes?.equals(other.changes) || false)
-        }
         return (
-            areChangesEqual &&
-            this.identifier === other.identifier,
-            this.time === other.time
+            this.identifier === other.identifier &&
+            this.time === other.time &&
+            this.changes.equals(other.changes) 
         )
+    }
+
+    static MergeChangesFromPhysics(physicsUpdates: Physics.PhysicsUpdate, character: Character): CharacterUpdate {
+        let spriteChanges = SpriteChanges.ChangesFromSprite(character)
+        spriteChanges.angle = physicsUpdates.angle
+        spriteChanges.position.x = physicsUpdates.adjustedPosition.x
+        spriteChanges.position.y = physicsUpdates.adjustedPosition.y
+        return new CharacterUpdate(physicsUpdates.identifier, physicsUpdates.time, spriteChanges)
     }
 }
 

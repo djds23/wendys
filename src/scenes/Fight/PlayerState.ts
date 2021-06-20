@@ -5,7 +5,6 @@ import * as R from 'ramda'
 import { Character } from '../../Character'
 import * as Changes  from './Updates'
 
-
 class PlayerState {
     character: Character
     scene: Phaser.Scene
@@ -19,8 +18,8 @@ class PlayerState {
         this.character.idle()
     }
 
-    identifier(): string {
-        return this.character.identifier()
+    get identifier(): string {
+        return this.character.identifier
     }
 
 
@@ -30,8 +29,7 @@ class PlayerState {
             // this.isJumping = false
         }
 
-        let output = new Changes.CharacterUpdate(this.character.identifier(), time, null)
-        output.changes = Changes.SpriteChanges.ChangesFromSprite(this.character)
+        let output = new Changes.CharacterUpdate(this.character.identifier, time, Changes.SpriteChanges.ChangesFromSprite(this.character))
         output.changes.texture = this.character.idle()
 
         if (inputs != null && this.character.isAttacking() == false) {

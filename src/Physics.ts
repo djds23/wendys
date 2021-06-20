@@ -7,20 +7,20 @@ class PhysicsUpdate {
     angle: number
     time: number
     // Should correspond to sprite.data.values.identifier
-    spriteIdentifier: string
+    identifier: string
     body: planck.Body
 
     constructor(
         adjustedPosition: planck.Vec2,
         angle: number,
         time: number,
-        spriteIdentifier: string,
+        identifier: string,
         body: planck.Body
     ) {
         this.adjustedPosition = adjustedPosition
         this.angle = angle
         this.time = time
-        this.spriteIdentifier = spriteIdentifier
+        this.identifier = identifier
         this.body = body
     }
 }
@@ -75,7 +75,6 @@ class Physics {
         box.setMassData({
             mass: 1,
             center: planck.Vec2(),
- 
             // I have to say I do not know the meaning of this "I", but if you set it to zero, bodies won't rotate
             I: 1
         });
@@ -121,5 +120,6 @@ update(time, delta): Array<PhysicsUpdate> {
 } 
 
 export {
-    Physics
+    Physics,
+    PhysicsUpdate
 }

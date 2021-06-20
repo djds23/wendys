@@ -82,7 +82,6 @@ export default class FightScene extends Phaser.Scene {
         if (current.state.input != null) {
             let inputUpdate = current.state.input.update(time, delta)
             if (inputUpdate != null) {
-                // console.log(FightScene.key + ";" + inputUpdate.time + ";" + JSON.stringify(inputUpdate))
                 this.recentMovementInputs.unshift(inputUpdate)
                 this.updateInputText()
 
@@ -112,42 +111,47 @@ export default class FightScene extends Phaser.Scene {
         /// if one system takes the update, then the other one shouldn't
         ///
         /// also this should be really fucking fast
+        let beforeChangeCache = new Map<string, Changes.SpriteChanges>()
         let characters = current.state.characters()
+
         characterUpdates.forEach((update) => {
             let character = characters.get(update.identifier)
-            if (character != null) { 
-                let changesApplied = this.applyChangesToCharacter(character, update)
-                if (changesApplied) {
-                    characters.delete(update.identifier)
-                }
+            if (character == null) return;
+            let beforeChange = Changes.SpriteChanges.ChangesFromSprite(character)
+            beforeChangeCache.set(character.identifier, beforeChange)
+            let changesApplied = this.applyChangesToCharacter(character, update, beforeChange)
+            if (changesApplied) {
+                this.updatePhysicsBodyToSprite(character.sprite)
+                characters.delete(update.identifier)
             }
         })
-    
-        physicsUpdates.forEach((update) => {
-            let sprite = characters.get(update.spriteIdentifier)?.sprite
+
+        physicsUpdates.forEach((update) => {    
+            let character = characters.get(update.identifier)
             // Physics has moved this sprite
-            if (sprite == null) return;
-            if (sprite?.x !== update.adjustedPosition.x || sprite?.y !== update.adjustedPosition.y) {
-                // update the position
-                sprite?.setPosition(update.adjustedPosition.x, update.adjustedPosition.y)
-                sprite?.setRotation(update.angle)
-                // remove from current sprites
-                characters.delete(update.spriteIdentifier)
+            if (character == null) return;
+            let beforeChange = beforeChangeCache.get(character.identifier)
+            if (beforeChange == null) {
+                beforeChange = Changes.SpriteChanges.ChangesFromSprite(character)
             }
-        })
+            let mergedUpdate = Changes.CharacterUpdate.MergeChangesFromPhysics(update, character)
+            let changesApplied = this.applyChangesToCharacter(character, mergedUpdate, beforeChange)
+            // console.log(character.identifier() + " " + beforeChange.equals(mergedUpdate.changes))
+            if (changesApplied) {
+                characters.delete(update.identifier)
+            }
+        })    
     }
 
     // Apply updates to a character if any exist
     // return true if the update was performed. Will only perform the update if the
     // character is not in the correct state.
-    applyChangesToCharacter(character: Character, update: Changes.CharacterUpdate): boolean {
+    applyChangesToCharacter(character: Character, update: Changes.CharacterUpdate, before: Changes.SpriteChanges): boolean {
         if (update.changes == null) {
             return false
         }
-
         let sprite = character.sprite
-        let beforeChange = Changes.SpriteChanges.ChangesFromSprite(character)
-        if (beforeChange.equals(update.changes) === false ||  character.sprite.anims.currentAnim == null) {
+        if (before.equals(update.changes) == false || character.sprite.anims.currentAnim == null) {
             sprite.setPosition(update.changes?.position.x, update.changes?.position.y)
             sprite.setRotation(update.changes?.angle)
 
@@ -158,16 +162,19 @@ export default class FightScene extends Phaser.Scene {
             if (update.changes?.texture?.animationKey != null && sprite.anims.currentAnim?.key !== update.changes?.texture.animationKey) {
                 sprite.play(update.changes.texture.animationKey)
             }
-
-            let vec = new planck.Vec2()
-            vec.set(sprite.x, sprite.y)
-            let body = sprite?.data.values.body as planck.Body
-            body.setPosition(vec)
             
             return true
         } else {
+            console.log(character.identifier + "didNotApplyUpdates")
             return false
         }
+    }
+
+    updatePhysicsBodyToSprite(sprite: Phaser.GameObjects.Sprite) {
+        let vec = new planck.Vec2()
+        vec.set(sprite.x, sprite.y)
+        let body = sprite?.data.values.body as planck.Body
+        body.setPosition(vec)
     }
 
     addInputText() {

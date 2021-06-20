@@ -37,8 +37,8 @@ class Current {
 
     characters(): Map<string, Character> {
         let map = new Map()
-        map.set(this.p1!.character.identifier(), this.p1!.character)
-        map.set(this.p2!.character.identifier(), this.p2!.character)
+        map.set(this.p1!.character.identifier, this.p1!.character)
+        map.set(this.p2!.character.identifier, this.p2!.character)
         return map
     }
 }
